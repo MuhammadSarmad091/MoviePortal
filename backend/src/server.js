@@ -18,8 +18,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 const userRoutes = require('./routes/userRoutes');
 const movieRoutes = require('./routes/movieRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 app.use('/api/users', userRoutes);
 app.use('/api/movies', movieRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Basic health check route
 app.get('/api/health', (req, res) => {

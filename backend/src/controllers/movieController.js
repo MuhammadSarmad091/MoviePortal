@@ -230,7 +230,7 @@ const getRankedMovies = async (req, res, next) => {
         }
       },
       {
-        $sort: { reviewCount: -1, averageRating: -1 }
+        $sort: { reviewCount: -1 }
       },
       {
         $facet: {
@@ -265,6 +265,41 @@ const getRankedMovies = async (req, res, next) => {
         totalMovies: total,
         moviesPerPage: limit
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Return single movie with its review count and global rank
+const getMovieByIdWithRank = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const movie = await Movie.findById(id)
+      .populate('userId', 'username email');
+
+    if (!movie) {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+
+    // Compute review count for this movie
+    const reviewCount = await Review.countDocuments({ movieId: id });
+
+    // Count how many movies have strictly greater review counts
+    const greaterAgg = await Review.aggregate([
+      { $group: { _id: '$movieId', count: { $sum: 1 } } },
+      { $match: { count: { $gt: reviewCount } } },
+      { $count: 'greater' }
+    ]);
+
+    const countGreater = (greaterAgg[0] && greaterAgg[0].greater) ? greaterAgg[0].greater : 0;
+    const rank = countGreater + 1;
+
+    res.json({
+      movie,
+      reviewCount,
+      rank
     });
   } catch (error) {
     next(error);

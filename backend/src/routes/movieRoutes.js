@@ -9,7 +9,8 @@ const {
   getRankedMovies
 } = require('../controllers/movieController');
 const { authenticate } = require('../middleware/authenticate');
-const { validateMovieInput } = require('../middleware/validation');
+const { validateMovieInput, validateReviewInput } = require('../middleware/validation');
+const { getReviewsForMovie, createReviewForMovie } = require('../controllers/reviewController');
 
 const router = express.Router();
 
@@ -18,9 +19,11 @@ router.get('/', getAllMovies);
 router.get('/search', searchMovies);
 router.get('/ranked', getRankedMovies);
 router.get('/:id', getMovieById);
+router.get('/:id/reviews', getReviewsForMovie);
 
 // Protected routes
 router.post('/', authenticate, validateMovieInput, createMovie);
+router.post('/:id/reviews', authenticate, validateReviewInput, createReviewForMovie);
 router.put('/:id', authenticate, validateMovieInput, updateMovie);
 router.delete('/:id', authenticate, deleteMovie);
 
