@@ -38,6 +38,23 @@ const validateUserInput = (req, res, next) => {
   next();
 };
 
+const validateLoginInput = (req, res, next) => {
+  const { email, password } = req.body;
+
+  const missingFields = validateRequired(['email', 'password'], req.body);
+  if (missingFields) {
+    return res.status(400).json({ 
+      message: `Missing required fields: ${missingFields.join(', ')}` 
+    });
+  }
+
+  if (!validateEmail(email)) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
+
+  next();
+};
+
 const validateMovieInput = (req, res, next) => {
   const { title, description, releaseDate, posterUrl, trailerUrl } = req.body;
   
@@ -76,6 +93,7 @@ module.exports = {
   validateEmail,
   validateRequired,
   validateUserInput,
+  validateLoginInput,
   validateMovieInput,
   validateReviewInput
 };
