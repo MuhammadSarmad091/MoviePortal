@@ -8,26 +8,40 @@
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(255, 193, 7, 0.1) 100%);
-  border-radius: var(--radius-lg);
-  padding: 3rem 2rem;
-  margin-bottom: 3rem;
-  text-align: center;
-  border: 1px solid var(--border-color);
+  background:
+    linear-gradient(180deg, rgba(4,8,20,0.66), rgba(6,12,30,0.45)),
+    url('https://preview.redd.it/how-can-someone-make-this-background-with-html-and-css-i-v0-zjgs096khv591.jpg?width=1080&crop=smart&auto=webp&s=5ec8b5f14222e27eecd19b9f5428793bcc857b58') center/cover no-repeat;
+  /* full-bleed across viewport */
+  width: 100vw;
   position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  border-radius: 0;
+  padding: 6rem 2rem;
+  margin-top: 0; /* sit flush below navbar */
+  margin-bottom: 2.5rem;
+  text-align: center;
+  border: none;
   overflow: hidden;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
 }
 
 .hero::before {
   content: '';
   position: absolute;
-  top: -50%;
+  top: -40%;
   right: -10%;
-  width: 300px;
-  height: 300px;
+  width: 350px;
+  height: 350px;
   background: radial-gradient(
     circle,
-    rgba(255, 193, 7, 0.1) 0%,
+    rgba(255, 193, 7, 0.08) 0%,
     transparent 70%
   );
   border-radius: 50%;
@@ -295,4 +309,14 @@
   .error-message {
     font-size: var(--font-size-sm);
   }
+}
+
+/* Extra subtle overlay to improve legibility */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.35));
+  pointer-events: none;
+  z-index: 0;
 }

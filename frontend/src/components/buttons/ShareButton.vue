@@ -48,7 +48,7 @@ const toggleShareMenu = () => {
 }
 
 const shareToClipboard = () => {
-  const text = `Check out "${props.movie.title}" on MovieDB: ${movieUrl.value}`
+  const text = `Check out "${props.movie.title}" on MoviesPortal: ${movieUrl.value}`
   navigator.clipboard.writeText(text).then(() => {
     copied.value = true
     setTimeout(() => {
@@ -59,7 +59,7 @@ const shareToClipboard = () => {
 }
 
 const shareToTwitter = () => {
-  const text = `Check out "${props.movie.title}" on MovieDB!`
+  const text = `Check out "${props.movie.title}" on MoviesPortal!`
   const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(movieUrl.value)}`
   window.open(url, '_blank')
   showShareMenu.value = false

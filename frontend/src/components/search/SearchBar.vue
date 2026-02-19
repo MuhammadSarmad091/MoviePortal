@@ -14,10 +14,11 @@
         @click="handleClear"
         title="Clear search"
       >
-        ✕
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
       <button class="search-button" @click="handleSearch">
-        🔍 Search
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        Search
       </button>
     </div>
   </div>

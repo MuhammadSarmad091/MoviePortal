@@ -5,7 +5,8 @@
       :disabled="currentPage === 1"
       @click="goToPage(currentPage - 1)"
     >
-      ← Previous
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Previous
     </button>
 
     <div class="pagination-info">
@@ -17,7 +18,8 @@
       :disabled="currentPage === totalPages"
       @click="goToPage(currentPage + 1)"
     >
-      Next →
+      Next
+      <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
     </button>
   </div>
 </template>

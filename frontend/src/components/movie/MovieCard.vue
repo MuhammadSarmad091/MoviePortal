@@ -11,7 +11,7 @@
         @load="handleImageLoad"
       />
       <div v-else class="card-image-placeholder">
-        <span class="placeholder-icon">🎬</span>
+        <i class="placeholder-icon fa-solid fa-film" aria-hidden="true"></i>
       </div>
       
       <div class="card-overlay">
@@ -23,13 +23,19 @@
       <!-- Rank Badge - Enhanced -->
       <div v-if="rank !== null" class="rank-badge">
         <span class="rank-number">#{{ rank }}</span>
-        <span v-if="rank === 1" class="rank-icon">👑</span>
+          <span v-if="rank === 1" class="rank-icon"><i class="fa-solid fa-crown" aria-hidden="true"></i></span>
       </div>
 
       <!-- Review Count Badge -->
       <div class="review-badge">
         <span class="review-count">{{ reviewCount }}</span>
-        <span class="review-icon">💬</span>
+          <span class="review-icon"><i class="fa-solid fa-comments" aria-hidden="true"></i></span>
+      </div>
+
+      <!-- Image Rating Badge (bottom-left) -->
+      <div class="image-rating" v-if="averageRating">
+        <i class="fa-solid fa-star" aria-hidden="true"></i>
+        <span class="rating-value">{{ averageRating }}</span>
       </div>
     </div>
 
@@ -40,16 +46,7 @@
         <span class="release-date">{{ releaseYear }}</span>
       </div>
 
-      <div class="card-stats">
-        <div class="stat">
-          <span class="stat-icon">⭐</span>
-          <span class="stat-value">{{ averageRating }}</span>
-        </div>
-        <div v-if="reviewCount > 0" class="stat">
-          <span class="stat-icon">📊</span>
-          <span class="stat-value">{{ reviewCount }}</span>
-        </div>
-      </div>
+      <!-- removed lower rating/activity stats; rating is shown on image -->
     </div>
   </router-link>
 </template>
@@ -244,6 +241,35 @@ const handleImageError = () => {
   color: #000;
   transform: translateY(-4px);
   border-color: var(--accent-gold);
+}
+
+/* Rating badge shown over the image at bottom-left */
+.image-rating {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: var(--accent-gold);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 193, 7, 0.18);
+  transition: all var(--transition-fast);
+}
+
+.movie-card:hover .image-rating {
+  transform: translateY(-4px);
+  background-color: var(--accent-gold);
+  color: #000;
+}
+
+.rating-value {
+  font-size: 0.95rem;
 }
 
 .card-content {

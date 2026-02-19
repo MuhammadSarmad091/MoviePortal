@@ -2,7 +2,7 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal-content">
       <button class="modal-close" @click="$emit('close')" title="Close modal">
-        ✕
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
       <slot></slot>
     </div>

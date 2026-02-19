@@ -2,8 +2,8 @@
   <div class="movie-details-page">
     <nav class="navbar">
       <div class="nav-container">
-        <button @click="goHome" class="btn-back">← Back</button>
-        <h1 class="logo">🎬 MovieHub</h1>
+        <button @click="goHome" class="btn-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back</button>
+        <h1 class="logo"><i class="fa-solid fa-film" aria-hidden="true"></i> MoviesPortal</h1>
         <div class="nav-space"></div>
       </div>
     </nav>
@@ -19,12 +19,12 @@
           </div>
         </div>
 
-        <div class="info-section">
+          <div class="info-section">
           <h1>{{ movie.title }}</h1>
           <div class="movie-meta">
-            <span class="rating">⭐ {{ movie.averageRating || 'N/A' }}/10</span>
-            <span class="reviews-count">📝 {{ movie.reviewsCount || 0 }} Reviews</span>
-            <span class="release-date">📅 {{ formatDate(movie.releaseDate) }}</span>
+            <span class="rating"><i class="fa-solid fa-star" aria-hidden="true"></i> {{ movie.averageRating || 'N/A' }}/10</span>
+            <span class="reviews-count"><i class="fa-solid fa-comments" aria-hidden="true"></i> {{ movie.reviewsCount || 0 }} Reviews</span>
+            <span class="release-date"><i class="fa-solid fa-calendar" aria-hidden="true"></i> {{ formatDate(movie.releaseDate) }}</span>
           </div>
 
           <p class="description">{{ movie.description }}</p>

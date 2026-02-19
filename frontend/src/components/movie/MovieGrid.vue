@@ -1,7 +1,7 @@
 <template>
   <div class="movie-grid-wrapper">
     <div v-if="movies.length === 0" class="no-movies">
-      <span class="empty-icon">🎬</span>
+      <i class="empty-icon fa-solid fa-film" aria-hidden="true"></i>
       <p>No movies found. Try adjusting your search or add a new movie.</p>
     </div>
 
@@ -44,7 +44,7 @@ defineProps({
 
 .empty-icon {
   font-size: 4rem;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .no-movies p {

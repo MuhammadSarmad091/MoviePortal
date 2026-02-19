@@ -295,6 +295,21 @@ h2 {
   min-height: 120px;
 }
 
+/* Make native date calendar icon visible on dark backgrounds */
+.form-input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2) contrast(1);
+}
+
+/* Firefox - color the calendar icon by forcing appearance */
+.form-input[type="date"]::-moz-focus-inner {
+  color: #fff;
+}
+
+/* Fallback: ensure the text within date input is light on dark bg */
+.form-input[type="date"] {
+  color: #fff;
+}
+
 .error-message {
   font-size: var(--font-size-xs);
   color: var(--danger);

@@ -13,10 +13,10 @@
 
       <div v-if="isAuthor" class="review-actions">
         <button class="action-button edit-button" @click="editReview" title="Edit review">
-          ✏️
+          <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
         </button>
         <button class="action-button delete-button" @click="deleteReview" title="Delete review">
-          🗑️
+          <i class="fa-solid fa-trash" aria-hidden="true"></i>
         </button>
       </div>
     </div>
@@ -24,7 +24,7 @@
     <div class="review-rating">
       <div class="stars">
         <span v-for="i in 10" :key="i" class="star" :class="{ filled: i <= review.rating }">
-          ★
+          <i class="fa-solid fa-star" aria-hidden="true"></i>
         </span>
       </div>
       <span class="rating-text">{{ review.rating }}/10</span>

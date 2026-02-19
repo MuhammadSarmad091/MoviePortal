@@ -2,7 +2,7 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 // App Configuration
-export const APP_NAME = 'MovieDB'
+export const APP_NAME = 'MoviesPortal'
 export const APP_VERSION = '1.0.0'
 
 // Feature Flags

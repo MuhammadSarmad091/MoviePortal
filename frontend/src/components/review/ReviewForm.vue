@@ -17,7 +17,7 @@
           @mouseleave="hoverRating = 0"
           :title="`Rate ${i} stars`"
         >
-          ★
+          <i class="fa-solid fa-star" aria-hidden="true"></i>
         </button>
       </div>
       <span class="rating-display" v-if="form.rating">{{ form.rating }}/10</span>

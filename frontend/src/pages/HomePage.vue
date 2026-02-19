@@ -24,7 +24,8 @@
           @click="openAddMovieModal"
           class="add-movie-button"
         >
-          ➕ Add Movie
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          Add Movie
         </button>
       </div>
 
@@ -41,7 +42,7 @@
 
       <!-- Error State -->
       <div v-else-if="error" class="error-container">
-        <div class="error-icon">⚠️</div>
+        <div class="error-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
         <h3 class="error-title">Oops! Something went wrong</h3>
         <p class="error-message">{{ error }}</p>
         <button class="retry-button" @click="loadMovies">

@@ -7,7 +7,8 @@
         class="add-review-button btn-primary"
         @click="toggleForm"
       >
-        ➕ Write Review
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        Write Review
       </button>
     </div>
 
@@ -22,9 +23,9 @@
 
     <!-- Error Message -->
     <div v-if="props.reviewError || formError" class="error-alert">
-      <span class="error-icon">⚠️</span>
+      <span class="error-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
       <span>{{ props.reviewError || formError }}</span>
-      <button class="close-error" @click="formError = null">✕</button>
+      <button class="close-error" @click="formError = null"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
 
     <!-- Reviews List -->
@@ -41,7 +42,7 @@
 
     <!-- Empty State -->
     <div v-else class="empty-state">
-      <span class="empty-icon">💭</span>
+      <i class="empty-icon fa-solid fa-comment-dots" aria-hidden="true"></i>
       <p>No reviews yet. Be the first to review!</p>
     </div>
 

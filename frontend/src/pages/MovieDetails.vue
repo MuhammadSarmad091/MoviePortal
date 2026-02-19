@@ -6,17 +6,18 @@
     </div>
 
     <div v-else-if="error" class="error-state">
-      <span class="error-icon">⚠️</span>
+      <span class="error-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
       <p>{{ error }}</p>
       <button @click="goBack" class="btn-secondary">
-        ← Go Back
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        Go Back
       </button>
     </div>
 
     <div v-else-if="movie" class="movie-details">
       <!-- Back Button and Actions -->
       <div class="details-header">
-        <button class="btn-back" @click="goBack">← Back</button>
+          <button class="btn-back" @click="goBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back</button>
         <div class="header-actions">
           <favorite-button
             :movie-id="movieId"
@@ -30,7 +31,8 @@
             @click="openEditModal"
             title="Edit this movie"
           >
-            ✏️ Edit
+            <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+            Edit
           </button>
           <button
             v-if="isMovieOwner"
@@ -38,7 +40,8 @@
             @click="deleteMovie"
             title="Delete this movie"
           >
-            🗑️ Delete
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            Delete
           </button>
         </div>
       </div>
@@ -54,24 +57,24 @@
             v-if="movieWithDefaults.posterUrl"
           />
           <div v-else class="card-image-placeholder">
-            <span class="placeholder-icon">🎬</span>
+            <i class="placeholder-icon fa-solid fa-film" aria-hidden="true"></i>
           </div>
           <div v-if="!posterLoaded" class="poster-placeholder">
-            🎬
+            <i class="fa-solid fa-film" aria-hidden="true"></i>
           </div>
         </div>
 
         <div class="movie-info">
           <h1 class="movie-title">{{ movieWithDefaults.title }}</h1>
 
-          <div class="movie-meta">
+            <div class="movie-meta">
             <span class="release-year">{{ movieWithDefaults.releaseYear }}</span>
-            <span class="duration">⏱️ {{ movieWithDefaults.duration }} min</span>
+            <span class="duration"><i class="fa-solid fa-clock" aria-hidden="true"></i> {{ movieWithDefaults.duration }} min</span>
             <span class="rating">
-              <span class="stars">★ {{ Number(movieWithDefaults.rating).toFixed(1) }}/10</span>
+              <span class="stars"><i class="fa-solid fa-star" aria-hidden="true"></i> {{ Number(movieWithDefaults.rating).toFixed(1) }}/10</span>
             </span>
             <span v-if="movieRank" class="rank-badge">
-              🏆 Rank #{{ movieRank }}
+              <i class="fa-solid fa-trophy" aria-hidden="true"></i> Rank #{{ movieRank }}
             </span>
           </div>
 
@@ -101,7 +104,8 @@
           <!-- Action Buttons -->
           <div class="action-buttons">
             <button class="btn-primary" @click="handleWatchNow">
-              ▶️ Watch Now
+              <i class="fa-solid fa-play" aria-hidden="true"></i>
+              Watch Now
             </button>
           </div>
         </div>
