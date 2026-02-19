@@ -19,12 +19,7 @@
       <div class="details-header">
           <button class="btn-back" @click="goBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back</button>
         <div class="header-actions">
-          <favorite-button
-            :movie-id="movieId"
-            :is-favorite="isFavorite"
-            @toggle="toggleFavorite"
-          />
-          <share-button :movie="movieWithDefaults" />
+          <share-button :movie="movieWithDefaults" style="--share-button-color: #fff" />
           <button
             v-if="isMovieOwner"
             class="btn-secondary"
@@ -93,8 +88,8 @@
 
           <!-- Cast & Crew -->
           <div class="cast-crew">
-            <div v-if="movieWithDefaults.director" class="crew-item">
-              <strong>Director:</strong> {{ movieWithDefaults.director }}
+            <div v-if="addedBy" class="crew-item">
+              <strong>Added By:</strong> {{ addedBy }}
             </div>
             <div v-if="movieWithDefaults.cast && movieWithDefaults.cast.length" class="crew-item">
               <strong>Cast:</strong> {{ Array.isArray(movieWithDefaults.cast) ? movieWithDefaults.cast.join(', ') : movieWithDefaults.cast }}
@@ -136,6 +131,7 @@
         @edit-review="handleEditReview"
         @delete-review="handleDeleteReview"
         @page-change="handleReviewsPageChange"
+        @clear-review-error="clearReviewError"
       />
     </div>
 
@@ -157,7 +153,6 @@ import { useAuth } from '../composables/useAuth'
 import { useApi } from '../composables/useApi'
 import { API_BASE_URL } from '../config'
 import ReviewList from '../components/review/ReviewList.vue'
-import FavoriteButton from '../components/buttons/FavoriteButton.vue'
 import ShareButton from '../components/buttons/ShareButton.vue'
 import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue'
 
@@ -173,7 +168,6 @@ const loading = ref(true)
 const error = ref(null)
 const reviewError = ref(null)
 const posterLoaded = ref(true)
-const isFavorite = ref(false)
 const reviewsPage = ref(1)
 const reviewsPages = ref(1)
 const totalReviews = ref(0)
@@ -217,6 +211,14 @@ const isMovieOwner = computed(() => {
     : movie.value.userId?._id || movie.value.userId?.id
   
   return currentUser.id === movieUserId || currentUser._id === movieUserId
+})
+
+// Username of the user who added the movie (handles populated user object or plain id)
+const addedBy = computed(() => {
+  if (!movie.value || !movie.value.userId) return null
+  const u = movie.value.userId
+  if (typeof u === 'string') return u
+  return u.username || u.name || u.id || u._id || null
 })
 
 // Function definitions - MUST BE BEFORE WATCH
@@ -435,12 +437,21 @@ const handleReviewsPageChange = (page) => {
   fetchReviews()
 }
 
+const clearReviewError = () => {
+  reviewError.value = null
+}
+
 const goBack = () => {
   router.back()
 }
 
 // Load movie details when component mounts or movieId changes
 onMounted(async () => {
+  // Ensure page starts at top when opened
+  if (typeof window !== 'undefined' && window.scrollTo) {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
   const id = movieId.value
   if (id && id !== 'undefined') {
     console.log('Component mounted, loading movie:', id)
@@ -450,6 +461,10 @@ onMounted(async () => {
 })
 
 watch(movieId, async (newId) => {
+  if (typeof window !== 'undefined' && window.scrollTo) {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
   if (newId && newId !== 'undefined') {
     console.log('MovieId changed to:', newId)
     reviewsPage.value = 1
@@ -577,6 +592,15 @@ const deleteMovie = async () => {
   gap: 1rem;
 }
 
+.header-actions .share-button {
+  color: #fff;
+}
+
+.header-actions .share-button:hover {
+  color: #fff;
+  transform: scale(1.05);
+}
+
 .movie-header {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -642,7 +666,14 @@ const deleteMovie = async () => {
   display: flex;
   gap: 1.5rem;
   flex-wrap: wrap;
+  align-items: center;
   font-size: var(--font-size-base);
+}
+
+.movie-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .release-year {

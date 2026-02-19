@@ -25,7 +25,7 @@
     <div v-if="props.reviewError || formError" class="error-alert">
       <span class="error-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
       <span>{{ props.reviewError || formError }}</span>
-      <button class="close-error" @click="formError = null"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      <button class="close-error" @click="handleClearError"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
 
     <!-- Reviews List -->
@@ -91,7 +91,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['add-review', 'edit-review', 'delete-review', 'page-change'])
+const emit = defineEmits(['add-review', 'edit-review', 'delete-review', 'page-change', 'clear-review-error'])
 
 const { currentUser, isAuthenticated } = useAuth()
 
@@ -152,6 +152,11 @@ const handleDeleteReview = (reviewId) => {
   }
 }
 
+const handleClearError = () => {
+  formError.value = null
+  emit('clear-review-error')
+}
+
 const goToPage = (page) => {
   emit('page-change', page)
 }
@@ -194,8 +199,8 @@ const goToPage = (page) => {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 2rem;
-  margin-top: 2rem;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
 }
 
 .reviews-header {
@@ -232,9 +237,9 @@ const goToPage = (page) => {
 }
 
 .empty-icon {
-  font-size: 2.5rem;
+  font-size: 1.8rem;
   display: block;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   opacity: 0.5;
 }
 

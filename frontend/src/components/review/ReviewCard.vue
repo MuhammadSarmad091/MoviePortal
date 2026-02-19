@@ -79,7 +79,7 @@ const deleteReview = () => {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 1.5rem;
+  padding: 1rem;
   transition: all var(--transition-base);
 }
 
@@ -101,8 +101,8 @@ const deleteReview = () => {
 }
 
 .user-avatar {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   background: linear-gradient(135deg, var(--accent-gold), #ffeb3b);
   border-radius: 50%;
   display: flex;
@@ -110,7 +110,7 @@ const deleteReview = () => {
   justify-content: center;
   color: #000;
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm);
+  font-size: 0.75rem;
   flex-shrink: 0;
 }
 
@@ -143,8 +143,9 @@ const deleteReview = () => {
   font-size: 1rem;
   cursor: pointer;
   transition: all var(--transition-fast);
-  opacity: 0.6;
+  opacity: 0.9;
   padding: 0.25rem;
+  color: #fff;
 }
 
 .action-button:hover {
@@ -173,7 +174,7 @@ const deleteReview = () => {
 }
 
 .star {
-  font-size: 1.25rem;
+  font-size: 1rem;
   color: var(--text-tertiary);
 }
 
@@ -182,15 +183,15 @@ const deleteReview = () => {
 }
 
 .rating-text {
-  font-size: var(--font-size-sm);
+  font-size: 0.85rem;
   color: var(--text-secondary);
   font-weight: var(--font-weight-semibold);
 }
 
 .review-content {
-  font-size: var(--font-size-base);
+  font-size: 0.95rem;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
 }
 
