@@ -64,6 +64,12 @@
         <a href="#" class="forgot-link">Forgot your password?</a>
       </p>
 
+      <!-- Signup Link -->
+      <p class="signup-section">
+        Don't have an account? 
+        <RouterLink to="/auth/register" class="signup-link">Sign up here</RouterLink>
+      </p>
+
       <!-- Demo Credentials -->
       <div class="demo-info">
         <p class="demo-title">Demo Credentials (Test Account):</p>
@@ -157,7 +163,7 @@ const handleLogin = async () => {
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.5rem;
 }
 
 .form-group {
@@ -285,6 +291,25 @@ const handleLogin = async () => {
 }
 
 .forgot-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.signup-section {
+  text-align: center;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.signup-link {
+  color: var(--accent-gold);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: opacity var(--transition-fast);
+}
+
+.signup-link:hover {
   opacity: 0.8;
   text-decoration: underline;
 }

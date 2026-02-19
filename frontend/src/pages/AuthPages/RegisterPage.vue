@@ -88,6 +88,12 @@
         and
         <a href="#" class="terms-link">Privacy Policy</a>
       </p>
+
+      <!-- Login Link -->
+      <p class="login-section">
+        Already have an account? 
+        <RouterLink to="/auth/login" class="login-link">Sign in here</RouterLink>
+      </p>
     </form>
   </div>
 </template>
@@ -200,7 +206,7 @@ const handleRegister = async () => {
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.5rem;
 }
 
 .form-group {
@@ -318,6 +324,25 @@ const handleRegister = async () => {
 }
 
 .terms-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.login-section {
+  text-align: center;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.login-link {
+  color: var(--accent-gold);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: opacity var(--transition-fast);
+}
+
+.login-link:hover {
   opacity: 0.8;
   text-decoration: underline;
 }
