@@ -1,96 +1,110 @@
 import { ref, computed } from 'vue'
-import { useApi } from './useApi'
 
-const currentUser = ref(null)
-const token = ref(localStorage.getItem('token'))
-const loading = ref(false)
-const error = ref(null)
+const user = ref(null)
 
-const { api } = useApi()
+// Check if token exists in localStorage
+const token = localStorage.getItem('token')
+if (token) {
+  // In a real app, you would validate the token here
+  try {
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      user.value = JSON.parse(userData)
+    }
+  } catch (err) {
+    console.error('Failed to parse user data:', err)
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+}
 
 export function useAuth() {
+  const currentUser = computed(() => user.value)
+  
   const isAuthenticated = computed(() => {
-    return !!token.value && !!currentUser.value
+    return !!localStorage.getItem('token') && !!user.value
   })
 
-  const loadUserFromStorage = async () => {
-    const storedToken = localStorage.getItem('token')
-    if (storedToken) {
-      token.value = storedToken
-      try {
-        const response = await api.get('/users/me')
-        currentUser.value = response.data
-      } catch (err) {
-        // Token invalid or expired
-        localStorage.removeItem('token')
-        token.value = null
-        currentUser.value = null
-      }
-    }
-  }
-
-  const register = async (username, email, password) => {
-    loading.value = true
-    error.value = null
+  const getCurrentUser = () => {
     try {
-      const response = await api.post('/users/register', {
-        username,
-        email,
-        password
-      })
-      token.value = response.data.token
-      currentUser.value = response.data.user
-      localStorage.setItem('token', token.value)
-      return response.data
+      const userData = localStorage.getItem('user')
+      return userData ? JSON.parse(userData) : null
     } catch (err) {
-      error.value = err.response?.data?.message || 'Registration failed'
-      throw err
-    } finally {
-      loading.value = false
+      console.error('Failed to get current user:', err)
+      return null
     }
   }
 
   const login = async (email, password) => {
-    loading.value = true
-    error.value = null
     try {
-      const response = await api.post('/users/login', {
-        email,
-        password
+      const response = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
       })
-      token.value = response.data.token
-      currentUser.value = response.data.user
-      localStorage.setItem('token', token.value)
-      return response.data
+
+      if (!response.ok) {
+        throw new Error('Login failed')
+      }
+
+      const data = await response.json()
+      
+      // Store token and user
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      user.value = data.user
+
+      return { success: true, data }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Login failed'
-      throw err
-    } finally {
-      loading.value = false
+      console.error('Login error:', err)
+      return { success: false, error: err.message }
+    }
+  }
+
+  const register = async (username, email, password) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, email, password })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Registration failed')
+      }
+
+      const data = await response.json()
+      
+      // Store token and user
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      user.value = data.user
+
+      return { success: true, data }
+    } catch (err) {
+      console.error('Register error:', err)
+      return { success: false, error: err.message }
     }
   }
 
   const logout = () => {
-    token.value = null
-    currentUser.value = null
     localStorage.removeItem('token')
-    error.value = null
-  }
-
-  // Load user on module instantiation
-  if (token.value && !currentUser.value) {
-    loadUserFromStorage()
+    localStorage.removeItem('user')
+    user.value = null
   }
 
   return {
-    currentUser,
-    token,
-    loading,
-    error,
+    user: currentUser,
     isAuthenticated,
-    register,
     login,
+    register,
     logout,
-    loadUserFromStorage
+    currentUser,
+    getCurrentUser
   }
 }

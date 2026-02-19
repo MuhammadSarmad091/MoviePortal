@@ -1,8 +1,8 @@
 <template>
   <button
     class="favorite-button"
-    :class="{ 'is-favorite': isFavorite }"
-    @click="handleClick"
+    :class="{ favorite: isFavorite }"
+    @click="toggleFavorite"
     :title="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
   >
     {{ isFavorite ? '❤️' : '🤍' }}
@@ -10,6 +10,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 const props = defineProps({
   movieId: {
     type: String,
@@ -23,7 +25,10 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle'])
 
-const handleClick = () => {
+const isFavoriteLocal = ref(props.isFavorite)
+
+const toggleFavorite = () => {
+  isFavoriteLocal.value = !isFavoriteLocal.value
   emit('toggle')
 }
 </script>
@@ -31,24 +36,18 @@ const handleClick = () => {
 <style scoped>
 .favorite-button {
   background: none;
-  border: 1px solid var(--border-color);
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 1.5rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  font-size: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  transition: transform var(--transition-fast);
+  padding: 0.5rem;
 }
 
 .favorite-button:hover {
-  background-color: var(--bg-hover);
-  border-color: var(--accent-gold);
+  transform: scale(1.2);
 }
 
-.favorite-button.is-favorite {
-  background-color: rgba(255, 193, 7, 0.1);
-  border-color: var(--accent-gold);
+.favorite-button.favorite {
+  color: #ff1744;
 }
 </style>

@@ -24,6 +24,22 @@
             @toggle="toggleFavorite"
           />
           <share-button :movie="movieWithDefaults" />
+          <button
+            v-if="isMovieOwner"
+            class="btn-secondary"
+            @click="openEditModal"
+            title="Edit this movie"
+          >
+            ✏️ Edit
+          </button>
+          <button
+            v-if="isMovieOwner"
+            class="btn-delete"
+            @click="deleteMovie"
+            title="Delete this movie"
+          >
+            🗑️ Delete
+          </button>
         </div>
       </div>
 
@@ -111,6 +127,7 @@
         :total-reviews="totalReviews"
         :total-pages="reviewsPages"
         :current-page="reviewsPage"
+        :review-error="reviewError"
         @add-review="handleAddReview"
         @edit-review="handleEditReview"
         @delete-review="handleDeleteReview"
@@ -118,6 +135,14 @@
       />
     </div>
 
+    <!-- Edit Movie Modal -->
+    <add-edit-movie-modal
+      v-if="showEditModal"
+      :initial-movie="movie"
+      :movie-id="movieId"
+      @close="closeEditModal"
+      @submit="handleMovieUpdate"
+    />
   </div>
 </template>
 
@@ -125,26 +150,31 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { useApi } from '../composables/useApi'
 import { API_BASE_URL } from '../config'
 import ReviewList from '../components/review/ReviewList.vue'
 import FavoriteButton from '../components/buttons/FavoriteButton.vue'
 import ShareButton from '../components/buttons/ShareButton.vue'
+import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { isAuthenticated } = useAuth()
+const { isAuthenticated, getCurrentUser } = useAuth()
+const { api } = useApi()
 
 // State variables
 const movie = ref(null)
 const reviews = ref([])
 const loading = ref(true)
 const error = ref(null)
+const reviewError = ref(null)
 const posterLoaded = ref(true)
 const isFavorite = ref(false)
 const reviewsPage = ref(1)
 const reviewsPages = ref(1)
 const totalReviews = ref(0)
 const movieRank = ref(null)
+const showEditModal = ref(false)
 
 // Get the movie ID from the route
 const movieId = computed(() => {
@@ -161,7 +191,7 @@ const movieWithDefaults = computed(() => {
     ...movie.value,
     releaseYear: movie.value.releaseYear || new Date(movie.value.releaseDate).getFullYear() || 'N/A',
     duration: movie.value.duration || '120',
-    rating: movie.value.rating || 0,
+    rating: movie.value.ratings || 0,
     genres: movie.value.genres || [],
     synopsis: movie.value.synopsis || movie.value.description || 'No synopsis available',
     director: movie.value.director || 'Unknown',
@@ -169,6 +199,20 @@ const movieWithDefaults = computed(() => {
     trailerUrl: movie.value.trailerUrl || null,
     posterUrl: movie.value.posterUrl || movie.value.poster || null
   }
+})
+
+// Check if current user is the owner of the movie
+const isMovieOwner = computed(() => {
+  if (!movie.value || !isAuthenticated.value) return false
+  const currentUser = getCurrentUser()
+  if (!currentUser) return false
+  
+  // Compare user IDs - the movie.userId might be an object with _id or a string
+  const movieUserId = typeof movie.value.userId === 'string' 
+    ? movie.value.userId 
+    : movie.value.userId?._id || movie.value.userId?.id
+  
+  return currentUser.id === movieUserId || currentUser._id === movieUserId
 })
 
 // Function definitions - MUST BE BEFORE WATCH
@@ -327,7 +371,7 @@ const handleAddReview = async (reviewData) => {
     const method = reviewData.reviewId ? 'PUT' : 'POST'
     const url = reviewData.reviewId
       ? `${API_BASE_URL}/reviews/${reviewData.reviewId}`
-      : `${API_BASE_URL}/reviews`
+      : `${API_BASE_URL}/movies/${movieId.value}/reviews`
 
     const response = await fetch(url, {
       method,
@@ -343,12 +387,16 @@ const handleAddReview = async (reviewData) => {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to save review')
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to save review')
     }
 
-    await fetchReviews()
+    reviewError.value = null
+    // Fetch both reviews and updated movie details to refresh rating
+    await Promise.all([fetchReviews(), fetchMovieDetails()])
   } catch (err) {
     console.error('Failed to add/edit review:', err)
+    reviewError.value = err.message
   }
 }
 
@@ -371,7 +419,8 @@ const handleDeleteReview = async (reviewId) => {
       throw new Error('Failed to delete review')
     }
 
-    await fetchReviews()
+    // Fetch both reviews and updated movie details to refresh rating
+    await Promise.all([fetchReviews(), fetchMovieDetails()])
   } catch (err) {
     console.error('Failed to delete review:', err)
   }
@@ -404,6 +453,49 @@ watch(movieId, async (newId) => {
     await fetchReviews()
   }
 })
+
+// Movie edit/delete handlers
+const openEditModal = () => {
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+}
+
+const handleMovieUpdate = async (movieData) => {
+  try {
+    await api.put(`/movies/${movieId.value}`, {
+      title: movieData.title,
+      description: movieData.description,
+      releaseDate: movieData.releaseDate,
+      posterUrl: movieData.posterUrl,
+      trailerUrl: movieData.trailerUrl
+    })
+    
+    showEditModal.value = false
+    // Reload the movie details
+    await fetchMovieDetails()
+  } catch (err) {
+    console.error('Error updating movie:', err)
+    error.value = err.response?.data?.message || 'Failed to update movie'
+  }
+}
+
+const deleteMovie = async () => {
+  if (!confirm('Are you sure you want to delete this movie? This action cannot be undone.')) {
+    return
+  }
+  
+  try {
+    await api.delete(`/movies/${movieId.value}`)
+    // Redirect to home page after successful deletion
+    router.push('/')
+  } catch (err) {
+    console.error('Error deleting movie:', err)
+    error.value = err.response?.data?.message || 'Failed to delete movie'
+  }
+}
 </script>
 
 <style scoped>
@@ -645,6 +737,23 @@ watch(movieId, async (newId) => {
 .btn-secondary:hover {
   background-color: var(--bg-hover);
   border-color: var(--accent-gold);
+}
+
+.btn-delete {
+  background-color: rgba(255, 68, 68, 0.1);
+  border: 1px solid #ff4444;
+  color: #ff6666;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-weight: var(--font-weight-medium);
+}
+
+.btn-delete:hover {
+  background-color: #ff4444;
+  color: white;
+  border-color: #ff2222;
 }
 
 /* Responsive */

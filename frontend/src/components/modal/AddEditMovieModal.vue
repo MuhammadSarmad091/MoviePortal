@@ -220,11 +220,9 @@ const isValidUrl = (string) => {
 
 const handleSubmit = () => {
   if (!validateForm()) {
-    console.log('Form validation failed', errors)
     return
   }
 
-  console.log('Submitting movie data:', form)
   emit('submit', {
     ...form,
     isEditing: isEditing.value,
@@ -233,22 +231,6 @@ const handleSubmit = () => {
 }
 
 const close = () => {
-  // Reset form when closing
-  form.title = ''
-  form.description = ''
-  form.releaseDate = ''
-  form.posterUrl = ''
-  form.trailerUrl = ''
-  error.value = null
-  
-  // Reset errors
-  errors.title = ''
-  errors.description = ''
-  errors.releaseDate = ''
-  errors.posterUrl = ''
-  errors.trailerUrl = ''
-  
-  isEditing.value = false
   emit('close')
 }
 </script>

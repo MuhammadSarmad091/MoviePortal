@@ -55,6 +55,12 @@ const createReviewForMovie = async (req, res, next) => {
       return res.status(404).json({ message: 'Movie not found' });
     }
 
+    // Check if user already reviewed this movie
+    const existingReview = await Review.findOne({ movieId: id, userId: req.userId });
+    if (existingReview) {
+      return res.status(400).json({ message: 'You have already reviewed this movie. You can only have one review per movie.' });
+    }
+
     const review = new Review({
       content,
       rating,

@@ -49,4 +49,12 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Virtual field to expose _id as id
+userSchema.virtual('id').get(function() {
+  return this._id.toString();
+});
+
+// Configure toJSON to include virtuals
+userSchema.set('toJSON', { virtuals: true });
+
 module.exports = mongoose.model('User', userSchema);

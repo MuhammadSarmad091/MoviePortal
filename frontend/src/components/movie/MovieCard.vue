@@ -78,15 +78,13 @@ const releaseYear = computed(() => {
 })
 
 const averageRating = computed(() => {
-  if (!props.movie.ratings || props.movie.ratings.length === 0) {
-    return '0'
-  }
-  const avg = props.movie.ratings.reduce((sum, r) => sum + r, 0) / props.movie.ratings.length
-  return avg.toFixed(1)
+  // Backend returns ratings as a single number (average rating)
+  return props.movie.ratings ? Number(props.movie.ratings).toFixed(1) : '0'
 })
 
 const reviewCount = computed(() => {
-  return props.movie.ratings ? props.movie.ratings.length : 0
+  // This comes from the backend review count
+  return props.movie.reviewCount || 0
 })
 
 const handleImageLoad = () => {

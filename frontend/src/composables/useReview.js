@@ -1,120 +1,53 @@
 import { ref } from 'vue'
+import { useApi } from './useApi'
 
-export const useReview = () => {
+export function useReview() {
+  const { api } = useApi()
   const reviews = ref([])
   const loading = ref(false)
   const error = ref(null)
 
-  const fetchReviews = async (movieId, page = 1, limit = 5) => {
+  const fetchReviews = async (movieId, page = 1) => {
     loading.value = true
     error.value = null
-
     try {
-      const response = await fetch(
-        `/api/movies/${movieId}/reviews?page=${page}&limit=${limit}`
-      )
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch reviews')
-      }
-
-      const data = await response.json()
-      reviews.value = data.reviews
-      return data
+      const response = await api.get(`/movies/${movieId}/reviews?page=${page}`)
+      reviews.value = response.data.reviews || []
+      return response.data
     } catch (err) {
       error.value = err.message
-      throw err
+      console.error('Error fetching reviews:', err)
     } finally {
       loading.value = false
     }
   }
 
-  const addReview = async (movieId, rating, content) => {
-    loading.value = true
-    error.value = null
-
+  const addReview = async (movieId, reviewData) => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          movieId,
-          rating,
-          content
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to add review')
-      }
-
-      return await response.json()
+      const response = await api.post(`/movies/${movieId}/reviews`, reviewData)
+      return response.data
     } catch (err) {
-      error.value = err.message
+      error.value = err.response?.data?.message || err.message
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
-  const updateReview = async (reviewId, rating, content) => {
-    loading.value = true
-    error.value = null
-
+  const updateReview = async (reviewId, reviewData) => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/reviews/${reviewId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          rating,
-          content
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update review')
-      }
-
-      return await response.json()
+      const response = await api.put(`/reviews/${reviewId}`, reviewData)
+      return response.data
     } catch (err) {
       error.value = err.message
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
   const deleteReview = async (reviewId) => {
-    loading.value = true
-    error.value = null
-
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`/api/reviews/${reviewId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete review')
-      }
-
-      return await response.json()
+      await api.delete(`/reviews/${reviewId}`)
     } catch (err) {
       error.value = err.message
       throw err
-    } finally {
-      loading.value = false
     }
   }
 

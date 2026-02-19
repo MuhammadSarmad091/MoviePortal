@@ -5,37 +5,29 @@
       @click="toggleShareMenu"
       title="Share this movie"
     >
-      🔗 Share
+      🔗
     </button>
 
     <div v-if="showShareMenu" class="share-menu">
-      <button
-        class="share-option"
-        @click="copyLink"
-        @blur="closeMenu"
-      >
+      <button class="share-option" @click="shareToClipboard">
         📋 Copy Link
       </button>
-      <button
-        class="share-option"
-        @click="shareOnTwitter"
-        @blur="closeMenu"
-      >
+      <button class="share-option" @click="shareToTwitter">
         𝕏 Twitter
       </button>
-      <button
-        class="share-option"
-        @click="shareOnFacebook"
-        @blur="closeMenu"
-      >
+      <button class="share-option" @click="shareToFacebook">
         f Facebook
       </button>
+    </div>
+
+    <div v-if="copied" class="copied-message">
+      ✓ Copied to clipboard
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   movie: {
@@ -45,33 +37,38 @@ const props = defineProps({
 })
 
 const showShareMenu = ref(false)
+const copied = ref(false)
+
+const movieUrl = computed(() => {
+  return `${window.location.origin}/movie/${props.movie.id || props.movie._id}`
+})
 
 const toggleShareMenu = () => {
   showShareMenu.value = !showShareMenu.value
 }
 
-const closeMenu = () => {
+const shareToClipboard = () => {
+  const text = `Check out "${props.movie.title}" on MovieDB: ${movieUrl.value}`
+  navigator.clipboard.writeText(text).then(() => {
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+      showShareMenu.value = false
+    }, 2000)
+  })
+}
+
+const shareToTwitter = () => {
+  const text = `Check out "${props.movie.title}" on MovieDB!`
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(movieUrl.value)}`
+  window.open(url, '_blank')
   showShareMenu.value = false
 }
 
-const copyLink = () => {
-  const url = window.location.href
-  navigator.clipboard.writeText(url)
-  alert('Link copied to clipboard!')
-  closeMenu()
-}
-
-const shareOnTwitter = () => {
-  const text = `Check out "${props.movie.title}" on MovieDB! ⭐`
-  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`
+const shareToFacebook = () => {
+  const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(movieUrl.value)}`
   window.open(url, '_blank')
-  closeMenu()
-}
-
-const shareOnFacebook = () => {
-  const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`
-  window.open(url, '_blank')
-  closeMenu()
+  showShareMenu.value = false
 }
 </script>
 
@@ -82,18 +79,15 @@ const shareOnFacebook = () => {
 
 .share-button {
   background: none;
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 1.5rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  font-weight: var(--font-weight-medium);
+  transition: transform var(--transition-fast);
+  padding: 0.5rem;
 }
 
 .share-button:hover {
-  background-color: var(--bg-hover);
-  border-color: var(--accent-gold);
+  transform: scale(1.2);
 }
 
 .share-menu {
@@ -102,12 +96,11 @@ const shareOnFacebook = () => {
   right: 0;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  margin-top: 0.5rem;
-  overflow: hidden;
-  z-index: 10;
+  border-radius: var(--radius-md);
   min-width: 150px;
-  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .share-option {
@@ -119,15 +112,36 @@ const shareOnFacebook = () => {
   text-align: left;
   color: var(--text-primary);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast);
+  font-size: var(--font-size-sm);
 }
 
 .share-option:hover {
   background-color: var(--bg-hover);
+  color: var(--accent-gold);
 }
 
-.share-option:focus {
-  outline: none;
-  background-color: var(--bg-hover);
+.copied-message {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  background-color: var(--accent-gold);
+  color: var(--bg-primary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 </style>

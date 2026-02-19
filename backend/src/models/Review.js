@@ -32,4 +32,12 @@ const reviewSchema = new mongoose.Schema({
   }
 });
 
+// Virtual field to expose _id as id
+reviewSchema.virtual('id').get(function() {
+  return this._id.toString();
+});
+
+// Configure toJSON to include virtuals
+reviewSchema.set('toJSON', { virtuals: true });
+
 module.exports = mongoose.model('Review', reviewSchema);

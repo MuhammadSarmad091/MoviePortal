@@ -20,6 +20,13 @@
       @cancel="handleCancelForm"
     />
 
+    <!-- Error Message -->
+    <div v-if="props.reviewError || formError" class="error-alert">
+      <span class="error-icon">⚠️</span>
+      <span>{{ props.reviewError || formError }}</span>
+      <button class="close-error" @click="formError = null">✕</button>
+    </div>
+
     <!-- Reviews List -->
     <div v-if="reviews.length > 0" class="reviews-list">
       <review-card
@@ -76,6 +83,10 @@ const props = defineProps({
   currentPage: {
     type: Number,
     default: 1
+  },
+  reviewError: {
+    type: String,
+    default: null
   }
 })
 
@@ -86,16 +97,27 @@ const { currentUser, isAuthenticated } = useAuth()
 const showForm = ref(false)
 const editingReview = ref(null)
 const isSubmitting = ref(false)
+const formError = ref(null)
 
 const toggleForm = () => {
   showForm.value = !showForm.value
+  formError.value = null
   if (!showForm.value) {
     editingReview.value = null
   }
 }
 
 const isReviewAuthor = (review) => {
-  return currentUser.value && review.userId.id === currentUser.value.id
+  if (!currentUser.value || !review.userId) return false
+  
+  // Handle userId as string (populated ID)
+  if (typeof review.userId === 'string') {
+    return currentUser.value.id === review.userId || currentUser.value._id === review.userId
+  }
+  
+  // Handle userId as object with id or _id fields
+  const reviewUserId = review.userId.id || review.userId._id
+  return currentUser.value.id === reviewUserId || currentUser.value._id === reviewUserId
 }
 
 const handleSubmitReview = async (reviewData) => {
@@ -135,6 +157,38 @@ const goToPage = (page) => {
 </script>
 
 <style scoped>
+.error-alert {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #c33;
+}
+
+.error-icon {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+
+.close-error {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #c33;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-error:hover {
+  opacity: 0.7;
+}
+
 .reviews-section {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);

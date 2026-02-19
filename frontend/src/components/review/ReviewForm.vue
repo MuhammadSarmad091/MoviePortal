@@ -7,18 +7,20 @@
       <label class="form-label">Rating *</label>
       <div class="rating-selector">
         <button
-          v-for="i in 5"
+          v-for="i in 10"
           :key="i"
           type="button"
           class="star-button"
-          :class="{ selected: form.rating === i }"
+          :class="{ selected: (hoverRating || form.rating) >= i }"
           @click.prevent="form.rating = i"
+          @mouseenter="hoverRating = i"
+          @mouseleave="hoverRating = 0"
           :title="`Rate ${i} stars`"
         >
           ★
         </button>
       </div>
-      <span class="rating-display" v-if="form.rating">{{ form.rating }}/5</span>
+      <span class="rating-display" v-if="form.rating">{{ form.rating }}/10</span>
     </div>
 
     <!-- Review Content -->
@@ -56,7 +58,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 
 const props = defineProps({
   initialReview: {
@@ -84,6 +86,21 @@ const errors = reactive({
 const error = ref(null)
 
 const isEditing = ref(!!props.initialReview)
+
+const hoverRating = ref(0)
+
+// Watch for changes to initialReview to update the form
+watch(() => props.initialReview, (newReview) => {
+  if (newReview) {
+    form.rating = newReview.rating || 0
+    form.content = newReview.content || ''
+    isEditing.value = true
+  } else {
+    form.rating = 0
+    form.content = ''
+    isEditing.value = false
+  }
+}, { deep: true })
 
 const validateForm = () => {
   let isValid = true

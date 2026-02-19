@@ -20,8 +20,8 @@ router.get('/', getAllMovies);
 router.get('/search', searchMovies);
 router.get('/ranked', getRankedMovies);
 router.get('/:id/with-rank', getMovieByIdWithRank);
-router.get('/:id', getMovieById);
 router.get('/:id/reviews', getReviewsForMovie);
+router.get('/:id', getMovieById);
 
 // Protected routes
 router.post('/', authenticate, validateMovieInput, createMovie);

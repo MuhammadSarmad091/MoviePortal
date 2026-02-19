@@ -1,219 +1,517 @@
 <template>
   <div class="movie-details-page">
-    <div class="breadcrumb">
-      <router-link to="/">Home</router-link>
-      <span> / </span>
-      <span>Movie Details</span>
-    </div>
+    <nav class="navbar">
+      <div class="nav-container">
+        <button @click="goHome" class="btn-back">← Back</button>
+        <h1 class="logo">🎬 MovieHub</h1>
+        <div class="nav-space"></div>
+      </div>
+    </nav>
 
-    <div class="movie-details-container">
+    <div v-if="loading" class="loading">Loading movie details...</div>
+    <div v-else-if="movie" class="movie-details">
       <div class="movie-header">
-        <div class="movie-poster">
-          <div class="poster-placeholder"></div>
-        </div>
-        <div class="movie-info">
-          <h1>Movie Title</h1>
-          <div class="movie-meta">
-            <span class="release-year">2024</span>
-            <span class="rating">★ Coming Soon</span>
+        <div class="poster-section">
+          <img :src="movie.posterUrl" :alt="movie.title" class="poster-image">
+          <div v-if="isOwner" class="owner-actions">
+            <button @click="editMovie" class="btn-edit">Edit</button>
+            <button @click="deleteMovie" class="btn-delete">Delete</button>
           </div>
-          <p class="movie-description">
-            Movie description will appear here...
-          </p>
-          <div class="movie-actions">
-            <button class="btn-primary">Add to Watchlist</button>
-            <button class="btn-secondary">Share</button>
+        </div>
+
+        <div class="info-section">
+          <h1>{{ movie.title }}</h1>
+          <div class="movie-meta">
+            <span class="rating">⭐ {{ movie.averageRating || 'N/A' }}/10</span>
+            <span class="reviews-count">📝 {{ movie.reviewsCount || 0 }} Reviews</span>
+            <span class="release-date">📅 {{ formatDate(movie.releaseDate) }}</span>
+          </div>
+
+          <p class="description">{{ movie.description }}</p>
+
+          <div class="trailer-section">
+            <h3>Trailer</h3>
+            <iframe 
+              v-if="movie.trailerUrl"
+              :src="movie.trailerUrl" 
+              title="Trailer"
+              width="100%"
+              height="400"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+              class="trailer-video"
+            ></iframe>
+            <p v-else class="no-trailer">No trailer available</p>
           </div>
         </div>
       </div>
 
-      <section class="reviews-section">
-        <h2>Reviews</h2>
-        <p class="section-note">Movie reviews will be displayed here...</p>
-      </section>
+      <div class="reviews-section">
+        <h2>Reviews ({{ movie.reviewsCount || 0 }})</h2>
+
+        <div v-if="isAuthenticated && !hasUserReview" class="review-form-container">
+          <h3>Write a Review</h3>
+          <form @submit.prevent="submitReview" class="review-form">
+            <div class="form-group">
+              <label for="rating">Rating</label>
+              <select v-model.number="newReview.rating" id="rating" required>
+                <option value="">Select rating</option>
+                <option v-for="i in 10" :key="i" :value="i">{{ i }} ⭐</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="content">Review</label>
+              <textarea 
+                v-model="newReview.content" 
+                id="content" 
+                placeholder="Write your review here..."
+                rows="5"
+                required
+              ></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit-review" :disabled="isSubmittingReview">
+              {{ isSubmittingReview ? 'Submitting...' : 'Post Review' }}
+            </button>
+          </form>
+        </div>
+
+        <div class="reviews-list">
+          <div v-if="reviews.length === 0" class="no-reviews">
+            No reviews yet. Be the first to review!
+          </div>
+          <review-card 
+            v-for="review in reviews" 
+            :key="review._id"
+            :review="review"
+            :can-edit="review.userId === currentUserId"
+            @edit="editReview(review)"
+            @delete="deleteReview(review._id)"
+          />
+        </div>
+      </div>
+    </div>
+    <div v-else class="not-found">
+      Movie not found
     </div>
   </div>
 </template>
 
-<script setup>
-import { useRoute } from 'vue-router'
+<script>
+import ReviewCard from '../components/ReviewCard.vue'
+import movieAPI from '../services/movieAPI'
+import reviewAPI from '../services/reviewAPI'
 
-const route = useRoute()
+export default {
+  name: 'MovieDetailsPage',
+  components: {
+    ReviewCard
+  },
+  data() {
+    return {
+      movie: null,
+      reviews: [],
+      loading: false,
+      isSubmittingReview: false,
+      isAuthenticated: false,
+      currentUserId: null,
+      newReview: {
+        rating: '',
+        content: ''
+      }
+    }
+  },
+  computed: {
+    movieId() {
+      return this.$route.params.id;
+    },
+    isOwner() {
+      return this.movie && this.currentUserId === this.movie.userId;
+    },
+    hasUserReview() {
+      return this.reviews.some(r => r.userId === this.currentUserId);
+    }
+  },
+  methods: {
+    async fetchMovieDetails() {
+      this.loading = true;
+      try {
+        const response = await movieAPI.getMovieById(this.movieId);
+        this.movie = response.movie || response;
+      } catch (error) {
+        console.error('Error fetching movie:', error);
+        this.movie = null;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async fetchReviews() {
+      try {
+        const response = await reviewAPI.getMovieReviews(this.movieId);
+        this.reviews = response.reviews || [];
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        this.reviews = [];
+      }
+    },
+    async submitReview() {
+      if (!this.newReview.rating || !this.newReview.content) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      this.isSubmittingReview = true;
+      try {
+        await reviewAPI.createReview(this.movieId, this.newReview);
+        this.newReview = { rating: '', content: '' };
+        await this.fetchReviews();
+        await this.fetchMovieDetails();
+      } catch (error) {
+        console.error('Error submitting review:', error);
+        alert(error.message);
+      } finally {
+        this.isSubmittingReview = false;
+      }
+    },
+    editReview(review) {
+      // Modal will be shown in next steps
+      console.log('Edit review:', review);
+    },
+    async deleteReview(reviewId) {
+      if (confirm('Are you sure you want to delete this review?')) {
+        try {
+          await reviewAPI.deleteReview(reviewId);
+          await this.fetchReviews();
+          await this.fetchMovieDetails();
+        } catch (error) {
+          console.error('Error deleting review:', error);
+          alert(error.message);
+        }
+      }
+    },
+    editMovie() {
+      // Modal will be shown in next steps
+      console.log('Edit movie');
+    },
+    async deleteMovie() {
+      if (confirm('Are you sure you want to delete this movie?')) {
+        try {
+          await movieAPI.deleteMovie(this.movieId);
+          this.$router.push('/');
+        } catch (error) {
+          console.error('Error deleting movie:', error);
+          alert(error.message);
+        }
+      }
+    },
+    formatDate(date) {
+      if (!date) return 'Unknown';
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    },
+    goHome() {
+      this.$router.push('/');
+    }
+  },
+  mounted() {
+    this.isAuthenticated = !!localStorage.getItem('token');
+    this.currentUserId = localStorage.getItem('userId');
+    this.fetchMovieDetails();
+    this.fetchReviews();
+  }
+}
 </script>
 
 <style scoped>
 .movie-details-page {
-  width: 100%;
+  min-height: 100vh;
+  background-color: #f5f5f5;
 }
 
-.breadcrumb {
+.navbar {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px 20px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  margin-bottom: 2rem;
 }
 
-.breadcrumb a {
-  color: var(--accent-gold);
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
+.btn-back {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
 }
 
-.breadcrumb a:hover {
-  opacity: 0.8;
+.btn-back:hover {
+  background: #5568d3;
 }
 
-.movie-details-container {
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #667eea;
+  margin: 0;
+}
+
+.nav-space {
+  width: 80px;
+}
+
+.loading, .not-found {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #666;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.movie-details {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
 }
 
 .movie-header {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 2rem;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-}
-
-.movie-poster {
-  width: 100%;
-}
-
-.poster-placeholder {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  background: linear-gradient(135deg, var(--bg-hover), var(--border-color));
-  border-radius: var(--radius-md);
-  animation: pulse 2s infinite;
-}
-
-.movie-info {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 1rem;
+  gap: 40px;
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.movie-info h1 {
-  font-size: 2.5rem;
-  margin: 0;
-  color: var(--text-primary);
+.poster-section {
+  flex: 0 0 300px;
+  position: relative;
+}
+
+.poster-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.owner-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-edit, .btn-delete {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.btn-edit {
+  background: #667eea;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #5568d3;
+}
+
+.btn-delete {
+  background: #ff6b6b;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #ff5252;
+}
+
+.info-section {
+  flex: 1;
+}
+
+.info-section h1 {
+  font-size: 32px;
+  margin-bottom: 15px;
+  color: #333;
 }
 
 .movie-meta {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  gap: 20px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
-.release-year {
-  font-size: var(--font-size-lg);
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-semibold);
+.movie-meta span {
+  font-size: 14px;
+  color: #666;
 }
 
-.rating {
-  font-size: var(--font-size-lg);
-  color: var(--accent-gold);
-  font-weight: var(--font-weight-semibold);
+.description {
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 30px;
 }
 
-.movie-description {
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
-  line-height: 1.8;
-  margin: 0.5rem 0 1rem 0;
+.trailer-section {
+  margin-top: 30px;
 }
 
-.movie-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 1rem;
+.trailer-section h3 {
+  margin-bottom: 15px;
+  color: #333;
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-weight: var(--font-weight-semibold);
-  transition: all var(--transition-fast);
+.trailer-video {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-primary {
-  background-color: var(--accent-gold);
-  color: #000;
-}
-
-.btn-primary:hover {
-  background-color: #e6a620;
-}
-
-.btn-secondary {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  border-color: var(--accent-gold);
-  background-color: var(--border-color);
+.no-trailer {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+  background: #f5f5f5;
+  border-radius: 8px;
 }
 
 .reviews-section {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .reviews-section h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 30px;
+  color: #333;
 }
 
-.section-note {
-  color: var(--text-tertiary);
-  font-size: var(--font-size-sm);
-  margin: 0;
+.review-form-container {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.8;
-  }
+.review-form-container h3 {
+  margin-bottom: 20px;
+  color: #333;
 }
 
-/* Responsive */
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group select,
+.form-group textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.btn-submit-review {
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.btn-submit-review:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+.btn-submit-review:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.reviews-list {
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.no-reviews {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .movie-header {
-    grid-template-columns: 1fr;
-  }
-
-  .movie-info h1 {
-    font-size: 1.75rem;
-  }
-
-  .movie-actions {
     flex-direction: column;
+    gap: 20px;
   }
 
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    text-align: center;
+  .poster-section {
+    flex: 1;
+  }
+
+  .info-section h1 {
+    font-size: 24px;
+  }
+
+  .movie-meta {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .trailer-video {
+    height: 250px;
   }
 }
 </style>

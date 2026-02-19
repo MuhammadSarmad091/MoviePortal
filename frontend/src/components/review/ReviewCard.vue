@@ -23,11 +23,11 @@
 
     <div class="review-rating">
       <div class="stars">
-        <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= review.rating }">
+        <span v-for="i in 10" :key="i" class="star" :class="{ filled: i <= review.rating }">
           ★
         </span>
       </div>
-      <span class="rating-text">{{ review.rating }}/5</span>
+      <span class="rating-text">{{ review.rating }}/10</span>
     </div>
 
     <p class="review-content">{{ review.content }}</p>

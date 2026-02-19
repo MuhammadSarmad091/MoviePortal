@@ -4,14 +4,26 @@
   </div>
 </template>
 
-<script setup>
-// App initialization - global composables can be loaded here if needed
+<script>
+export default {
+  name: 'App'
+}
 </script>
 
 <style>
-/* All global styles are imported in main.js from styles/globals.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+}
+
 #app {
-  width: 100%;
   min-height: 100vh;
 }
 </style>

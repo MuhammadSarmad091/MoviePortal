@@ -13,10 +13,21 @@ const getAllMovies = async (req, res, next) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
+    // Get review count for each movie
+    const moviesWithReviewCount = await Promise.all(
+      movies.map(async (movie) => {
+        const reviewCount = await Review.countDocuments({ movieId: movie._id });
+        return {
+          ...movie.toJSON(),
+          reviewCount
+        };
+      })
+    );
+
     const total = await Movie.countDocuments();
 
     res.json({
-      movies,
+      movies: moviesWithReviewCount,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
