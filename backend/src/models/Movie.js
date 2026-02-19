@@ -44,4 +44,12 @@ const movieSchema = new mongoose.Schema({
   }
 });
 
+// Add virtual field to expose _id as id for frontend compatibility
+movieSchema.virtual('id').get(function() {
+  return this._id.toString();
+});
+
+// Ensure virtuals are included when converting to JSON
+movieSchema.set('toJSON', { virtuals: true });
+
 module.exports = mongoose.model('Movie', movieSchema);

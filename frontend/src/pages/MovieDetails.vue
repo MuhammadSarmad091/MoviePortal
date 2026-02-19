@@ -23,7 +23,7 @@
             :is-favorite="isFavorite"
             @toggle="toggleFavorite"
           />
-          <share-button :movie="movie" />
+          <share-button :movie="movieWithDefaults" />
         </div>
       </div>
 
@@ -31,30 +31,34 @@
       <div class="movie-header">
         <div class="poster-container">
           <img
-            :src="movie.posterUrl"
-            :alt="movie.title"
+            :src="movieWithDefaults.posterUrl"
+            :alt="movieWithDefaults.title"
             class="poster-image"
             @error="handleImageError"
+            v-if="movieWithDefaults.posterUrl"
           />
+          <div v-else class="card-image-placeholder">
+            <span class="placeholder-icon">🎬</span>
+          </div>
           <div v-if="!posterLoaded" class="poster-placeholder">
             🎬
           </div>
         </div>
 
         <div class="movie-info">
-          <h1 class="movie-title">{{ movie.title }}</h1>
+          <h1 class="movie-title">{{ movieWithDefaults.title }}</h1>
 
           <div class="movie-meta">
-            <span class="release-year">{{ movie.releaseYear }}</span>
-            <span class="duration">⏱️ {{ movie.duration }} min</span>
+            <span class="release-year">{{ movieWithDefaults.releaseYear }}</span>
+            <span class="duration">⏱️ {{ movieWithDefaults.duration }} min</span>
             <span class="rating">
-              <span class="stars">★ {{ movie.rating.toFixed(1) }}/10</span>
+              <span class="stars">★ {{ Number(movieWithDefaults.rating).toFixed(1) }}/10</span>
             </span>
           </div>
 
           <!-- Genres -->
           <div class="genres-container">
-            <span v-for="genre in movie.genres" :key="genre" class="genre-tag">
+            <span v-for="genre in movieWithDefaults.genres" :key="genre" class="genre-tag">
               {{ genre }}
             </span>
           </div>
@@ -62,16 +66,16 @@
           <!-- Synopsis -->
           <div class="synopsis-section">
             <h3>Synopsis</h3>
-            <p class="synopsis">{{ movie.synopsis }}</p>
+            <p class="synopsis">{{ movieWithDefaults.synopsis }}</p>
           </div>
 
           <!-- Cast & Crew -->
           <div class="cast-crew">
-            <div v-if="movie.director" class="crew-item">
-              <strong>Director:</strong> {{ movie.director }}
+            <div v-if="movieWithDefaults.director" class="crew-item">
+              <strong>Director:</strong> {{ movieWithDefaults.director }}
             </div>
-            <div v-if="movie.cast && movie.cast.length" class="crew-item">
-              <strong>Cast:</strong> {{ movie.cast.join(', ') }}
+            <div v-if="movieWithDefaults.cast && movieWithDefaults.cast.length" class="crew-item">
+              <strong>Cast:</strong> {{ Array.isArray(movieWithDefaults.cast) ? movieWithDefaults.cast.join(', ') : movieWithDefaults.cast }}
             </div>
           </div>
 
@@ -80,7 +84,7 @@
             <button class="btn-primary" @click="handleWatchNow">
               ▶️ Watch Now
             </button>
-            <button class="btn-secondary" @click="openTrailer" v-if="movie.trailerUrl">
+            <button class="btn-secondary" @click="openTrailer" v-if="movieWithDefaults.trailerUrl">
               🎞️ Watch Trailer
             </button>
           </div>
@@ -104,53 +108,88 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuth } from '../../composables/useAuth'
-import { API_BASE_URL } from '../../config'
-import ReviewList from '../review/ReviewList.vue'
-import FavoriteButton from '../buttons/FavoriteButton.vue'
-import ShareButton from '../buttons/ShareButton.vue'
+import { useAuth } from '../composables/useAuth'
+import { API_BASE_URL } from '../config'
+import ReviewList from '../components/review/ReviewList.vue'
+import FavoriteButton from '../components/buttons/FavoriteButton.vue'
+import ShareButton from '../components/buttons/ShareButton.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { isAuthenticated } = useAuth()
 
-const movieId = computed(() => route.params.id)
-
+// State variables
 const movie = ref(null)
 const reviews = ref([])
 const loading = ref(true)
 const error = ref(null)
-const posterLoaded = ref(false)
+const posterLoaded = ref(true)
 const isFavorite = ref(false)
-
 const reviewsPage = ref(1)
 const reviewsPages = ref(1)
 const totalReviews = ref(0)
 
-onMounted(async () => {
-  await fetchMovieDetails()
-  await fetchReviews()
+// Get the movie ID from the route
+const movieId = computed(() => {
+  const id = route.params.id
+  console.log('Route params:', route.params)
+  console.log('Movie ID from route:', id)
+  return id
 })
 
+// Computed properties with fallbacks for movie data
+const movieWithDefaults = computed(() => {
+  if (!movie.value) return null
+  return {
+    ...movie.value,
+    releaseYear: movie.value.releaseYear || new Date(movie.value.releaseDate).getFullYear() || 'N/A',
+    duration: movie.value.duration || '120',
+    rating: movie.value.rating || 0,
+    genres: movie.value.genres || [],
+    synopsis: movie.value.synopsis || movie.value.description || 'No synopsis available',
+    director: movie.value.director || 'Unknown',
+    cast: movie.value.cast || [],
+    trailerUrl: movie.value.trailerUrl || null,
+    posterUrl: movie.value.posterUrl || movie.value.poster || null
+  }
+})
+
+// Function definitions - MUST BE BEFORE WATCH
 const fetchMovieDetails = async () => {
   try {
+    if (!movieId.value) {
+      console.warn('No movie ID available')
+      return
+    }
+    
     loading.value = true
     error.value = null
 
-    const response = await fetch(`${API_BASE_URL}/movies/${movieId.value}`)
+    const url = `${API_BASE_URL}/movies/${movieId.value}`
+    console.log('Fetching movie details from:', url)
+    
+    const response = await fetch(url)
+    console.log('Movie details response status:', response.status)
+    
     if (!response.ok) {
-      throw new Error('Failed to load movie details')
+      throw new Error(`Failed to load movie details: ${response.status} ${response.statusText}`)
     }
 
-    movie.value = await response.json()
+    const data = await response.json()
+    console.log('Movie API response:', data)
+    
+    // The backend returns { movie, reviewCount }
+    movie.value = data.movie || data
+    console.log('Movie loaded successfully:', movie.value)
     posterLoaded.value = true
 
     if (isAuthenticated.value) {
       await checkFavoriteStatus()
     }
   } catch (err) {
+    console.error('Error fetching movie details:', err)
     error.value = err.message || 'An error occurred while loading the movie'
   } finally {
     loading.value = false
@@ -159,19 +198,30 @@ const fetchMovieDetails = async () => {
 
 const fetchReviews = async () => {
   try {
+    if (!movieId.value) {
+      console.warn('No movie ID available')
+      return
+    }
+    
     const page = reviewsPage.value
-    const response = await fetch(
-      `${API_BASE_URL}/movies/${movieId.value}/reviews?page=${page}&limit=5`
-    )
-
+    const url = `${API_BASE_URL}/movies/${movieId.value}/reviews?page=${page}&limit=5`
+    console.log('Fetching reviews from:', url)
+    
+    const response = await fetch(url)
+    console.log('Reviews response status:', response.status)
+    
     if (!response.ok) {
-      throw new Error('Failed to load reviews')
+      throw new Error(`Failed to load reviews: ${response.status}`)
     }
 
     const data = await response.json()
-    reviews.value = data.reviews
-    totalReviews.value = data.total
-    reviewsPages.value = data.pages
+    console.log('Reviews API response:', data)
+    
+    // Backend returns { reviews, pagination }
+    reviews.value = data.reviews || []
+    totalReviews.value = data.pagination?.totalReviews || 0
+    reviewsPages.value = data.pagination?.totalPages || 1
+    console.log('Reviews loaded:', reviews.value.length, 'Total pages:', reviewsPages.value)
   } catch (err) {
     console.error('Failed to fetch reviews:', err)
   }
@@ -219,19 +269,21 @@ const toggleFavorite = async () => {
 }
 
 const handleImageError = () => {
+  console.log('Poster image failed to load')
+  posterLoaded.value = false
   if (movie.value) {
     movie.value.posterUrl = null
   }
 }
 
 const handleWatchNow = () => {
-  // Implementation for watch functionality
   alert('Watch functionality coming soon!')
 }
 
 const openTrailer = () => {
-  if (movie.value.trailerUrl) {
-    window.open(movie.value.trailerUrl, '_blank')
+  if (movieWithDefaults.value?.trailerUrl) {
+    console.log('Opening trailer:', movieWithDefaults.value.trailerUrl)
+    window.open(movieWithDefaults.value.trailerUrl, '_blank')
   }
 }
 
@@ -267,7 +319,6 @@ const handleAddReview = async (reviewData) => {
 }
 
 const handleEditReview = (review) => {
-  // Handled by ReviewList component
   console.log('Edit review:', review)
 }
 
@@ -300,6 +351,25 @@ const handleReviewsPageChange = (page) => {
 const goBack = () => {
   router.back()
 }
+
+// Load movie details when component mounts or movieId changes
+onMounted(async () => {
+  const id = movieId.value
+  if (id && id !== 'undefined') {
+    console.log('Component mounted, loading movie:', id)
+    await fetchMovieDetails()
+    await fetchReviews()
+  }
+})
+
+watch(movieId, async (newId) => {
+  if (newId && newId !== 'undefined') {
+    console.log('MovieId changed to:', newId)
+    reviewsPage.value = 1
+    await fetchMovieDetails()
+    await fetchReviews()
+  }
+})
 </script>
 
 <style scoped>
@@ -408,6 +478,22 @@ const goBack = () => {
   justify-content: center;
   font-size: 3rem;
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-hover) 100%);
+}
+
+.card-image-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-hover) 100%);
+  width: 100%;
+  height: 100%;
+}
+
+.placeholder-icon {
+  opacity: 0.5;
 }
 
 .movie-info {
