@@ -309,6 +309,7 @@ const getMovieByIdWithRank = async (req, res, next) => {
 module.exports = {
   getAllMovies,
   getMovieById,
+  getMovieByIdWithRank,
   createMovie,
   updateMovie,
   deleteMovie,

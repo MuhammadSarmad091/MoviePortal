@@ -2,6 +2,7 @@ const express = require('express');
 const {
   getAllMovies,
   getMovieById,
+  getMovieByIdWithRank,
   createMovie,
   updateMovie,
   deleteMovie,
@@ -18,6 +19,7 @@ const router = express.Router();
 router.get('/', getAllMovies);
 router.get('/search', searchMovies);
 router.get('/ranked', getRankedMovies);
+router.get('/:id/with-rank', getMovieByIdWithRank);
 router.get('/:id', getMovieById);
 router.get('/:id/reviews', getReviewsForMovie);
 

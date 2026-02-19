@@ -54,6 +54,9 @@
             <span class="rating">
               <span class="stars">★ {{ Number(movieWithDefaults.rating).toFixed(1) }}/10</span>
             </span>
+            <span v-if="movieRank" class="rank-badge">
+              🏆 Rank #{{ movieRank }}
+            </span>
           </div>
 
           <!-- Genres -->
@@ -84,10 +87,20 @@
             <button class="btn-primary" @click="handleWatchNow">
               ▶️ Watch Now
             </button>
-            <button class="btn-secondary" @click="openTrailer" v-if="movieWithDefaults.trailerUrl">
-              🎞️ Watch Trailer
-            </button>
           </div>
+        </div>
+      </div>
+
+      <!-- Trailer Section -->
+      <div v-if="movieWithDefaults.trailerUrl" class="trailer-section">
+        <h2>Trailer</h2>
+        <div class="trailer-container">
+          <iframe
+            :src="getYoutubeEmbedUrl(movieWithDefaults.trailerUrl)"
+            class="trailer-iframe"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
 
@@ -104,6 +117,7 @@
         @page-change="handleReviewsPageChange"
       />
     </div>
+
   </div>
 </template>
 
@@ -130,6 +144,7 @@ const isFavorite = ref(false)
 const reviewsPage = ref(1)
 const reviewsPages = ref(1)
 const totalReviews = ref(0)
+const movieRank = ref(null)
 
 // Get the movie ID from the route
 const movieId = computed(() => {
@@ -167,7 +182,7 @@ const fetchMovieDetails = async () => {
     loading.value = true
     error.value = null
 
-    const url = `${API_BASE_URL}/movies/${movieId.value}`
+    const url = `${API_BASE_URL}/movies/${movieId.value}/with-rank`
     console.log('Fetching movie details from:', url)
     
     const response = await fetch(url)
@@ -180,9 +195,11 @@ const fetchMovieDetails = async () => {
     const data = await response.json()
     console.log('Movie API response:', data)
     
-    // The backend returns { movie, reviewCount }
+    // The backend returns { movie, reviewCount, rank }
     movie.value = data.movie || data
+    movieRank.value = data.rank || null
     console.log('Movie loaded successfully:', movie.value)
+    console.log('Movie rank:', movieRank.value)
     posterLoaded.value = true
 
     if (isAuthenticated.value) {
@@ -280,11 +297,28 @@ const handleWatchNow = () => {
   alert('Watch functionality coming soon!')
 }
 
-const openTrailer = () => {
-  if (movieWithDefaults.value?.trailerUrl) {
-    console.log('Opening trailer:', movieWithDefaults.value.trailerUrl)
-    window.open(movieWithDefaults.value.trailerUrl, '_blank')
+const getYoutubeEmbedUrl = (url) => {
+  if (!url) return ''
+  
+  // Handle youtube.com/watch?v=VIDEO_ID
+  if (url.includes('youtube.com/watch')) {
+    const videoId = new URL(url).searchParams.get('v')
+    return `https://www.youtube.com/embed/${videoId}`
   }
+  
+  // Handle youtu.be/VIDEO_ID
+  if (url.includes('youtu.be/')) {
+    const videoId = url.split('youtu.be/')[1].split('?')[0]
+    return `https://www.youtube.com/embed/${videoId}`
+  }
+  
+  // If already an embed URL, return as-is
+  if (url.includes('youtube.com/embed')) {
+    return url
+  }
+  
+  // Otherwise assume it's a direct video ID
+  return `https://www.youtube.com/embed/${url}`
 }
 
 const handleAddReview = async (reviewData) => {
@@ -647,5 +681,44 @@ watch(movieId, async (newId) => {
   .header-actions {
     width: 100%;
   }
+}
+
+/* Trailer Section Styles */
+.trailer-section {
+  margin: 3rem 0;
+  padding: 2rem;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+.trailer-section h2 {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+}
+
+.trailer-container {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+.trailer-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.rank-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent-gold), #ff8c00);
+  color: var(--bg-primary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
 }
 </style>
