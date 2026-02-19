@@ -6,6 +6,64 @@
   width: 100%;
 }
 
+/* Error Banner */
+.error-banner {
+  background-color: rgba(244, 67, 54, 0.1);
+  border: 1px solid #ef5350;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  padding: 0;
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, rgba(244, 67, 54, 0.02) 100%);
+}
+
+.error-banner .error-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.error-banner .error-text {
+  color: #ff5252;
+  font-size: var(--font-size-base);
+  flex: 1;
+  font-weight: var(--font-weight-medium);
+}
+
+.error-banner .close-btn {
+  background: none;
+  border: none;
+  color: #ff5252;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.error-banner .close-btn:hover {
+  color: #ff6b6b;
+  transform: scale(1.2);
+}
+
 /* Hero Section */
 .hero {
   background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(255, 193, 7, 0.1) 100%);

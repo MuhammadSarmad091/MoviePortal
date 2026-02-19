@@ -32,7 +32,7 @@ const routes = [
       {
         path: 'movie/:id',
         name: 'MovieDetails',
-        component: () => import('../pages/MovieDetailsPage.vue')
+        component: () => import('../pages/MovieDetails.vue')
       }
     ]
   },

@@ -6,6 +6,9 @@
         :src="movie.posterUrl" 
         :alt="movie.title"
         class="card-image"
+        loading="lazy"
+        @error="handleImageError"
+        @load="handleImageLoad"
       />
       <div v-else class="card-image-placeholder">
         <span class="placeholder-icon">🎬</span>
@@ -17,8 +20,16 @@
         </div>
       </div>
 
+      <!-- Rank Badge - Enhanced -->
       <div v-if="rank !== null" class="rank-badge">
         <span class="rank-number">#{{ rank }}</span>
+        <span v-if="rank === 1" class="rank-icon">👑</span>
+      </div>
+
+      <!-- Review Count Badge -->
+      <div class="review-badge">
+        <span class="review-count">{{ reviewCount }}</span>
+        <span class="review-icon">💬</span>
       </div>
     </div>
 
@@ -34,8 +45,8 @@
           <span class="stat-icon">⭐</span>
           <span class="stat-value">{{ averageRating }}</span>
         </div>
-        <div class="stat">
-          <span class="stat-icon">💬</span>
+        <div v-if="reviewCount > 0" class="stat">
+          <span class="stat-icon">📊</span>
           <span class="stat-value">{{ reviewCount }}</span>
         </div>
       </div>
@@ -44,7 +55,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   movie: {
@@ -57,6 +68,9 @@ const props = defineProps({
     default: null
   }
 })
+
+const imageLoaded = ref(false)
+const imageFailed = ref(false)
 
 const releaseYear = computed(() => {
   if (!props.movie.releaseDate) return 'N/A'
@@ -74,6 +88,14 @@ const averageRating = computed(() => {
 const reviewCount = computed(() => {
   return props.movie.ratings ? props.movie.ratings.length : 0
 })
+
+const handleImageLoad = () => {
+  imageLoaded.value = true
+}
+
+const handleImageError = () => {
+  imageFailed.value = true
+}
 </script>
 
 <style scoped>
@@ -88,6 +110,7 @@ const reviewCount = computed(() => {
   transition: all var(--transition-base);
   text-decoration: none;
   color: inherit;
+  position: relative;
 }
 
 .movie-card:hover {
@@ -177,12 +200,52 @@ const reviewCount = computed(() => {
   justify-content: center;
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-sm);
-  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.movie-card:hover .rank-badge {
+  transform: scale(1.1) translateY(-4px);
+  box-shadow: 0 6px 16px rgba(255, 193, 7, 0.6);
 }
 
 .rank-number {
-  display: block;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.rank-icon {
+  display: inline-block;
+  font-size: 0.8rem;
+  margin-left: 2px;
+}
+
+.review-badge {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: var(--accent-gold);
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.movie-card:hover .review-badge {
+  background-color: var(--accent-gold);
+  color: #000;
+  transform: translateY(-4px);
+  border-color: var(--accent-gold);
 }
 
 .card-content {
@@ -225,6 +288,7 @@ const reviewCount = computed(() => {
   margin-top: auto;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
 }
 
 .stat {
@@ -233,6 +297,7 @@ const reviewCount = computed(() => {
   gap: 0.35rem;
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
+  transition: all var(--transition-fast);
 }
 
 .stat-icon {
@@ -241,6 +306,10 @@ const reviewCount = computed(() => {
 
 .stat-value {
   font-weight: var(--font-weight-semibold);
+}
+
+.movie-card:hover .stat {
+  color: var(--accent-gold);
 }
 
 /* Responsive */

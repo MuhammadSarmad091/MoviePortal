@@ -1,5 +1,14 @@
 <template>
   <div class="home-page">
+    <!-- Error Banner for Movie Submission -->
+    <div v-if="error && showAddMovieModal" class="error-banner">
+      <div class="error-banner-content">
+        <span class="error-icon">❌</span>
+        <span class="error-text">{{ error }}</span>
+        <button @click="error = null" class="close-btn">×</button>
+      </div>
+    </div>
+
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
@@ -19,13 +28,13 @@
       <!-- Section Header -->
       <div class="section-header">
         <h2>{{ searchQuery ? 'Search Results' : 'Popular Movies' }}</h2>
-        <router-link
+        <button
           v-if="isAuthenticated"
-          to="/add-movie"
+          @click="openAddMovieModal"
           class="add-movie-button"
         >
           ➕ Add Movie
-        </router-link>
+        </button>
       </div>
 
       <!-- Search Bar -->
@@ -61,6 +70,14 @@
         />
       </div>
     </section>
+
+    <!-- Add Movie Modal -->
+    <add-edit-movie-modal
+      v-if="showAddMovieModal"
+      :is-loading="isSubmittingMovie"
+      @close="closeAddMovieModal"
+      @submit="handleMovieAdded"
+    />
   </div>
 </template>
 
@@ -71,6 +88,7 @@ import { useApi } from '../composables/useApi'
 import SearchBar from '../components/search/SearchBar.vue'
 import MovieGrid from '../components/movie/MovieGrid.vue'
 import Pagination from '../components/pagination/Pagination.vue'
+import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue'
 
 const { isAuthenticated } = useAuth()
 const { api } = useApi()
@@ -81,6 +99,8 @@ const error = ref(null)
 const currentPage = ref(1)
 const totalPages = ref(1)
 const searchQuery = ref('')
+const showAddMovieModal = ref(false)
+const isSubmittingMovie = ref(false)
 
 const loadMovies = async () => {
   isLoading.value = true
@@ -130,6 +150,61 @@ const goToPage = async (page) => {
 
 const scrollToMovies = () => {
   document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const openAddMovieModal = () => {
+  showAddMovieModal.value = true
+}
+
+const closeAddMovieModal = () => {
+  showAddMovieModal.value = false
+}
+
+const handleMovieAdded = async (movieData) => {
+  try {
+    isSubmittingMovie.value = true
+    console.log('Saving movie with data:', movieData)
+    
+    // Make API call to create or update movie
+    if (movieData.isEditing && movieData.movieId) {
+      // Update existing movie
+      console.log('Updating movie:', movieData.movieId)
+      await api.put(`/movies/${movieData.movieId}`, {
+        title: movieData.title,
+        description: movieData.description,
+        releaseDate: movieData.releaseDate,
+        posterUrl: movieData.posterUrl,
+        trailerUrl: movieData.trailerUrl
+      })
+    } else {
+      // Create new movie
+      console.log('Creating new movie')
+      const response = await api.post('/movies', {
+        title: movieData.title,
+        description: movieData.description,
+        releaseDate: movieData.releaseDate,
+        posterUrl: movieData.posterUrl,
+        trailerUrl: movieData.trailerUrl
+      })
+      console.log('Movie created successfully:', response.data)
+    }
+    
+    // Close modal and reload
+    showAddMovieModal.value = false
+    currentPage.value = 1
+    await loadMovies()
+    console.log('Movies reloaded after adding new movie')
+  } catch (err) {
+    console.error('Failed to save movie:', err)
+    console.error('Error details:', {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+      data: err.response?.data
+    })
+    error.value = err.response?.data?.message || 'Failed to save movie. Please try again.'
+  } finally {
+    isSubmittingMovie.value = false
+  }
 }
 
 // Load movies on mount
