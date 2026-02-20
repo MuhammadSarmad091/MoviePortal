@@ -33,5 +33,3 @@ Thumbs.db
 # Development only
 .venv/
 *.docx
-
-Readme.md
