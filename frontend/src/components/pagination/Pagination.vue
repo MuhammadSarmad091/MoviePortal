@@ -38,14 +38,14 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['change-page'])
+const emit = defineEmits(['page-change'])
 
 const canGoPrevious = computed(() => props.currentPage > 1)
 const canGoNext = computed(() => props.currentPage < props.totalPages)
 
 const goToPage = (page) => {
   if (page >= 1 && page <= props.totalPages && page !== props.currentPage) {
-    emit('change-page', page)
+    emit('page-change', page)
   }
 }
 </script>

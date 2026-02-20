@@ -77,8 +77,8 @@
       </div>
 
       <!-- General Error -->
-      <div v-if="error" class="error-box">
-        {{ error }}
+      <div v-if="error || serverError" class="error-box">
+        {{ serverError || error }}
       </div>
 
       <!-- Form Actions -->
@@ -117,6 +117,11 @@ const props = defineProps({
   isLoading: {
     type: Boolean,
     default: false
+  }
+  ,
+  serverError: {
+    type: String,
+    default: null
   }
 })
 

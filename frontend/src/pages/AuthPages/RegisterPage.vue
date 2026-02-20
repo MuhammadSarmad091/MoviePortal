@@ -9,6 +9,7 @@
         <input
           id="username"
           v-model="form.username"
+          @input="onUsernameInput"
           type="text"
           placeholder="Choose a username"
           class="form-input"
@@ -24,6 +25,7 @@
         <input
           id="email"
           v-model="form.email"
+          @input="onEmailInput"
           type="email"
           placeholder="you@example.com"
           class="form-input"
@@ -102,6 +104,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
+import { sanitizeUsername, sanitizeEmail } from '../../composables/useInputSanitize'
 
 const router = useRouter()
 const { register, loading: isLoading, error: authError } = useAuth()
@@ -187,6 +190,15 @@ const handleRegister = async () => {
   } catch (err) {
     console.error('Registration error:', err)
   }
+}
+
+// sanitize as user types
+const onUsernameInput = (e) => {
+  form.username = sanitizeUsername(e.target.value)
+}
+
+const onEmailInput = (e) => {
+  form.email = sanitizeEmail(e.target.value)
 }
 </script>
 

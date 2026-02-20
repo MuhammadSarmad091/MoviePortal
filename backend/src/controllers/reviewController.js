@@ -1,16 +1,23 @@
 const Review = require('../models/Review');
 const Movie = require('../models/Movie');
+const mongoose = require('mongoose');
 
 async function updateMovieRating(movieId) {
+  // Robust match: compare stringified movieId so aggregation works whether
+  // reviews.movieId is stored as ObjectId or as a string.
+  const movieIdStr = movieId.toString()
   const stats = await Review.aggregate([
-    { $match: { movieId: movieId } },
+    { $match: { $expr: { $eq: [ { $toString: '$movieId' }, movieIdStr ] } } },
     { $group: { _id: '$movieId', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
   ]);
 
   if (stats.length > 0) {
-    const { avgRating } = stats[0];
-    await Movie.findByIdAndUpdate(movieId, { ratings: avgRating });
+    const { avgRating, count } = stats[0];
+    const rounded = Math.round((avgRating + Number.EPSILON) * 10) / 10 // one decimal
+    console.log(`updateMovieRating: movieId=${movieId} count=${count} avg=${avgRating} rounded=${rounded}`)
+    await Movie.findByIdAndUpdate(movieId, { ratings: rounded });
   } else {
+    console.log(`updateMovieRating: movieId=${movieId} no reviews, setting 0`)
     await Movie.findByIdAndUpdate(movieId, { ratings: 0 });
   }
 }

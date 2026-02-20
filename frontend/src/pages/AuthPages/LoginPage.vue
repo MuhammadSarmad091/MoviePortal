@@ -9,6 +9,7 @@
         <input
           id="email"
           v-model="form.email"
+          @input="onEmailInput"
           type="email"
           placeholder="you@example.com"
           class="form-input"
@@ -74,8 +75,8 @@
       <div class="demo-info">
         <p class="demo-title">Demo Credentials (Test Account):</p>
         <p class="demo-cred">
-          <strong>Email:</strong> demo@movie.com<br />
-          <strong>Password:</strong> demo123456
+          <strong>Email:</strong> abc@gmail.com<br />
+          <strong>Password:</strong> 12344321
         </p>
       </div>
     </form>
@@ -86,6 +87,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
+import { sanitizeEmail } from '../../composables/useInputSanitize'
 
 const router = useRouter()
 const route = useRoute()
@@ -144,6 +146,11 @@ const handleLogin = async () => {
   } catch (err) {
     console.error('Login error:', err)
   }
+}
+
+// input handlers to sanitize while typing
+const onEmailInput = (e) => {
+  form.email = sanitizeEmail(e.target.value)
 }
 </script>
 

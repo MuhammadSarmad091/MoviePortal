@@ -36,6 +36,10 @@ const getAllMovies = async (req, res, next) => {
       }
     });
   } catch (error) {
+    // Handle duplicate title (unique index) gracefully
+    if (error && error.code === 11000 && error.keyPattern && error.keyPattern.title) {
+      return res.status(400).json({ message: 'Movie with this title already exists' });
+    }
     next(error);
   }
 };
@@ -58,6 +62,10 @@ const getMovieById = async (req, res, next) => {
       reviewCount
     });
   } catch (error) {
+    // Handle duplicate title on update
+    if (error && error.code === 11000 && error.keyPattern && error.keyPattern.title) {
+      return res.status(400).json({ message: 'Movie with this title already exists' });
+    }
     next(error);
   }
 };

@@ -20,7 +20,9 @@ if (token) {
 
 export function useAuth() {
   const currentUser = computed(() => user.value)
-  
+  const loading = ref(false)
+  const error = ref(null)
+
   const isAuthenticated = computed(() => {
     return !!localStorage.getItem('token') && !!user.value
   })
@@ -36,6 +38,8 @@ export function useAuth() {
   }
 
   const login = async (email, password) => {
+    loading.value = true
+    error.value = null
     try {
       const response = await fetch('http://localhost:5000/api/users/login', {
         method: 'POST',
@@ -45,25 +49,33 @@ export function useAuth() {
         body: JSON.stringify({ email, password })
       })
 
+      const respText = await response.text()
+      let data
+      try { data = JSON.parse(respText) } catch (e) { data = null }
+
       if (!response.ok) {
-        throw new Error('Login failed')
+        const msg = (data && data.message) || respText || 'Login failed'
+        throw new Error(msg)
       }
 
-      const data = await response.json()
-      
       // Store token and user
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       user.value = data.user
 
+      loading.value = false
       return { success: true, data }
     } catch (err) {
       console.error('Login error:', err)
-      return { success: false, error: err.message }
+      error.value = err.message || 'Login failed'
+      loading.value = false
+      throw err
     }
   }
 
   const register = async (username, email, password) => {
+    loading.value = true
+    error.value = null
     try {
       const response = await fetch('http://localhost:5000/api/users/register', {
         method: 'POST',
@@ -73,22 +85,27 @@ export function useAuth() {
         body: JSON.stringify({ username, email, password })
       })
 
+      const respText = await response.text()
+      let data
+      try { data = JSON.parse(respText) } catch (e) { data = null }
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Registration failed')
+        const msg = (data && data.message) || respText || 'Registration failed'
+        throw new Error(msg)
       }
 
-      const data = await response.json()
-      
       // Store token and user
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       user.value = data.user
 
+      loading.value = false
       return { success: true, data }
     } catch (err) {
       console.error('Register error:', err)
-      return { success: false, error: err.message }
+      error.value = err.message || 'Registration failed'
+      loading.value = false
+      throw err
     }
   }
 
@@ -105,6 +122,8 @@ export function useAuth() {
     register,
     logout,
     currentUser,
-    getCurrentUser
+    getCurrentUser,
+    loading,
+    error
   }
 }

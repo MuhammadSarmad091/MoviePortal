@@ -10,11 +10,11 @@
 
         <nav class="nav-menu">
           <router-link to="/" class="nav-link">Home</router-link>
-          <a href="#" class="nav-link">Explore</a>
+          <a href="#" class="nav-link" @click.prevent="goToExplore">Explore</a>
         </nav>
 
         <div class="header-actions">
-          <button v-if="!isAuthenticated" @click="goToLogin" class="btn-secondary">
+          <button v-if="!isAuthenticated" @click="goToLogin" class="btn-secondary btn-login">
             Login
           </button>
 
@@ -43,7 +43,45 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>&copy; 2026 MoviesPortal. All rights reserved.</p>
+      <div class="footer-inner">
+        <div class="footer-col footer-about">
+          <router-link to="/" class="footer-logo">
+            <i class="fa-solid fa-film" aria-hidden="true"></i>
+            MoviesPortal
+          </router-link>
+          <p class="footer-text">Discover, review and share your favorite movies. Curated recommendations and community reviews to help you find your next watch.</p>
+        </div>
+
+        <div class="footer-col footer-links">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><router-link to="/">Home</router-link></li>
+            <li><a href="#" class="nav-link" @click.prevent="goToExplore">Explore</a></li>
+            <li><router-link to="/auth/login">Login</router-link></li>
+            <li><router-link to="/auth/register">Sign Up</router-link></li>
+          </ul>
+        </div>
+
+        <div class="footer-col footer-social">
+          <h4>Follow Us</h4>
+          <p class="follow-text">Stay connected — follow MoviesPortal on social media</p>
+          <div class="social-icons">
+            <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter" class="social-link"><i class="fa-brands fa-twitter"></i></a>
+            <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook" class="social-link"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram" class="social-link"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn" class="social-link"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube" class="social-link"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>&copy; 2026 MoviesPortal. All rights reserved.</span>
+        <span class="footer-policy">
+          <router-link to="/terms">Terms</router-link>
+          <router-link to="/privacy">Privacy</router-link>
+        </span>
+      </div>
     </footer>
   </div>
 </template>
@@ -71,6 +109,24 @@ const userInitials = computed(() => {
 
 const toggleMenu = (e) => {
   showMenu.value = !showMenu.value
+}
+
+const goToExplore = async () => {
+  try {
+    const current = router.currentRoute.value && router.currentRoute.value.path
+    if (current === '/') {
+      document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+
+    await router.push('/')
+    // small delay to allow home to render its section
+    setTimeout(() => {
+      document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' })
+    }, 80)
+  } catch (e) {
+    console.error('Failed to navigate to Explore:', e)
+  }
 }
 
 const handleLogout = () => {
@@ -235,11 +291,140 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 .app-footer {
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
-  text-align: center;
-  padding: 2rem;
+  padding: 2.5rem 1rem;
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   margin-top: auto;
+}
+
+.footer-inner {
+  max-width: 1400px;
+  margin: 0 auto 1.25rem auto;
+  display: grid;
+  grid-template-columns: 1fr 220px 220px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.footer-col h4 {
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  font-size: var(--font-size-sm);
+}
+
+.footer-about .footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-gold);
+  font-weight: 700;
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+}
+
+.footer-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.footer-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--accent-gold);
+}
+
+.follow-text {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.social-icons {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.social-link i { font-size: 1rem; }
+
+.social-link:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, var(--accent-gold), #ff8c00);
+  color: #000;
+}
+
+/* Navbar login button (gold, rounded, hover) */
+.btn-login {
+  background: linear-gradient(135deg, var(--accent-gold), #ffb300);
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(255, 184, 3, 0.12);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  cursor: pointer;
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(255, 184, 3, 0.16);
+  opacity: 0.98;
+}
+
+.btn-login:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+}
+
+.btn-login:focus {
+  outline: 3px solid rgba(255, 193, 7, 0.18);
+  outline-offset: 2px;
+}
+
+.footer-bottom {
+  border-top: 1px solid var(--border-color);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.footer-policy a {
+  color: var(--text-secondary);
+  margin-left: 1rem;
+  text-decoration: none;
+}
+
+.footer-policy a:hover { color: var(--accent-gold); 
 }
 
 @media (max-width: 768px) {
@@ -257,6 +442,16 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 
   .app-main {
     padding: 1rem;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
 </style>

@@ -68,12 +68,13 @@
       v-if="showAddMovieModal"
       @close="closeAddMovieModal"
       @submit="handleMovieAdded"
+      :server-error="addMovieServerError"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useAuth } from '../composables/useAuth'
 import { useApi } from '../composables/useApi'
 import SearchBar from '../components/search/SearchBar.vue'
@@ -91,15 +92,18 @@ const currentPage = ref(1)
 const totalPages = ref(1)
 const searchQuery = ref('')
 const showAddMovieModal = ref(false)
+const itemsPerPage = ref(10)
+const addMovieServerError = ref(null)
 
 const loadMovies = async () => {
   isLoading.value = true
   error.value = null
 
   try {
+    const limit = itemsPerPage.value || 10
     const endpoint = searchQuery.value
-      ? `/movies/search?title=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}`
-      : `/movies?page=${currentPage.value}`
+      ? `/movies/search?title=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}&limit=${limit}`
+      : `/movies?page=${currentPage.value}&limit=${limit}`
 
     const response = await api.get(endpoint)
 
@@ -118,6 +122,66 @@ const loadMovies = async () => {
     isLoading.value = false
   }
 }
+
+// Determine items per page so the first page shows two full rows
+const computeItemsPerPage = () => {
+  // Prefer counting actual rendered CSS grid columns so two full rows fit exactly.
+  const gridEl = document.querySelector('.movie-grid')
+  if (gridEl) {
+    const style = window.getComputedStyle(gridEl)
+    const colsStr = style.getPropertyValue('grid-template-columns')
+    if (colsStr && colsStr !== 'none') {
+      const cols = colsStr.trim().split(/\s+/).length || 1
+      itemsPerPage.value = Math.max(1, cols) * 2
+      return
+    }
+  }
+
+  // Fallback: estimate based on container width and conservative min column widths
+  const containerWidth = (gridEl && gridEl.clientWidth) || window.innerWidth
+  let minCol = 200
+  if (window.innerWidth <= 480) {
+    itemsPerPage.value = 2 * 2
+    return
+  } else if (window.innerWidth <= 768) {
+    minCol = 150
+  } else if (window.innerWidth <= 1200) {
+    minCol = 180
+  } else {
+    minCol = 200
+  }
+
+  const cols = Math.max(1, Math.floor(containerWidth / minCol))
+  itemsPerPage.value = cols * 2
+}
+
+let resizeTimer = null
+const onResize = () => {
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    const old = itemsPerPage.value
+    computeItemsPerPage()
+    if (itemsPerPage.value !== old) {
+      currentPage.value = 1
+      loadMovies()
+    }
+  }, 150)
+}
+
+onMounted(() => {
+  computeItemsPerPage()
+  window.addEventListener('resize', onResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResize)
+  clearTimeout(resizeTimer)
+})
+
+// react to page changes
+watch(currentPage, async (newPage) => {
+  await loadMovies()
+})
 
 const handleSearch = async (query) => {
   searchQuery.value = query
@@ -143,11 +207,13 @@ const scrollToMovies = () => {
 }
 
 const openAddMovieModal = () => {
+  addMovieServerError.value = null
   showAddMovieModal.value = true
 }
 
 const closeAddMovieModal = () => {
   showAddMovieModal.value = false
+  addMovieServerError.value = null
 }
 
 const handleMovieAdded = async (movieData) => {
@@ -173,12 +239,18 @@ const handleMovieAdded = async (movieData) => {
     }
     
     showAddMovieModal.value = false
+    addMovieServerError.value = null
     // Reload movies after adding a new one
     currentPage.value = 1
     await loadMovies()
   } catch (err) {
     console.error('Error saving movie:', err)
-    error.value = err.response?.data?.message || 'Failed to save movie'
+    // Display server message inside modal if present
+    const msg = err.response?.data?.message || err.message || 'Failed to save movie'
+    addMovieServerError.value = msg
+    // keep modal open so user can fix
+    showAddMovieModal.value = true
+    console.error('Save movie error message:', msg)
   }
 }
 
