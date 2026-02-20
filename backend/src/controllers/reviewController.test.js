@@ -13,6 +13,9 @@ jest.mock('../models/Review', () => {
     this.save = mockSave;
   };
   Review.find = jest.fn().mockReturnValue({ populate: jest.fn().mockReturnThis(), sort: jest.fn().mockReturnThis(), skip: jest.fn().mockReturnThis(), limit: jest.fn().mockResolvedValue([]) });
+  Review.findOne = jest.fn().mockResolvedValue(null);
+  Review.findById = jest.fn().mockResolvedValue(null);
+  Review.findByIdAndDelete = jest.fn().mockResolvedValue(null);
   Review.countDocuments = jest.fn().mockResolvedValue(0);
   Review.aggregate = jest.fn().mockResolvedValue([]);
   return Review;
