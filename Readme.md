@@ -138,20 +138,6 @@ docker-compose down
 docker-compose down -v
 ```
 
-### Common Docker Commands
-
-```bash
-# Rebuild images without cache
-docker-compose build --no-cache
-
-# Restart services
-docker-compose restart
-
-# Check status
-docker-compose ps
-```
-
----
 
 ## Section 2: Manual Setup with npm
 
@@ -188,18 +174,6 @@ npm run dev
 # Frontend will run on: http://localhost:5173
 ```
 
-### Build Frontend for Production
-
-```bash
-cd frontend
-
-# Build the application
-npm run build
-
-# Preview the production build
-npm run preview
-```
-
 ### Access the Application
 
 - **Frontend (dev)**: http://localhost:5173
@@ -216,13 +190,8 @@ npm run preview
 cd backend
 
 # Run all tests once
-npm test
+npm run test
 
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm test -- --coverage
 ```
 
 **Test Files:** `src/controllers/*.test.js`
@@ -243,11 +212,6 @@ cd frontend
 # Run all tests once
 npm run test
 
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test -- --coverage
 ```
 
 **Test Files:** `tests/unit/*.spec.js`
@@ -305,24 +269,24 @@ Tests      22 passed (22)
 
 ## Project Highlights
 
-✅ **Security**
+**Security**
 - Input sanitization to prevent special characters
 - JWT-based authentication
 - Password hashing with bcryptjs
 - CORS enabled
 
-✅ **Testing**
+**Testing**
 - 30+ unit tests across frontend and backend
 - Production-style testing approach
 - Real component testing with mocked dependencies
 
-✅ **UI/UX**
+**UI/UX**
 - Golden, rounded login button with hover effects
 - Responsive design with FontAwesome icons
 - Professional navbar and footer
 - Error handling and user feedback
 
-✅ **Performance**
+**Performance**
 - Gzip compression in production (Nginx)
 - Optimized Docker images (Alpine-based)
 - Caching strategies for static assets
@@ -366,50 +330,3 @@ cd backend
 npm install
 npm test
 ```
-
----
-
-## Development Workflow
-
-1. **Create a branch**
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-
-2. **Make changes and test locally**
-   ```bash
-   # Terminal 1
-   cd backend && npm run dev
-   
-   # Terminal 2
-   cd frontend && npm run dev
-   ```
-
-3. **Run tests**
-   ```bash
-   cd frontend && npm run test
-   cd backend && npm test
-   ```
-
-4. **Commit and push**
-   ```bash
-   git add .
-   git commit -m "Add your feature"
-   git push origin feature/your-feature
-   ```
-
----
-
-## License
-
-This project is licensed under the ISC License.
-
-## Author
-
-Created as a full-stack web application project demonstrating Vue 3, Express, MongoDB, Docker, and modern testing practices.
-
----
-
-## Support
-
-For issues or questions, please refer to the project documentation or create an issue in the repository.
