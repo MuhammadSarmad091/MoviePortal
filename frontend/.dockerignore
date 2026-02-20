@@ -17,4 +17,3 @@ src/**/*.spec.js
 src/**/*.test.js
 README.md
 vitest.config.js
-vite.config.js
