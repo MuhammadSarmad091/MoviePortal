@@ -34,5 +34,4 @@ Thumbs.db
 .venv/
 *.docx
 
-docker-compose.yml
 Readme.md
