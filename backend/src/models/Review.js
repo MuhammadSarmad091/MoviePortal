@@ -32,6 +32,13 @@ const reviewSchema = new mongoose.Schema({
   }
 });
 
+// Indexes for query performance
+reviewSchema.index({ movieId: 1 });
+reviewSchema.index({ userId: 1 });
+
+// Compound unique index to prevent duplicate reviews (race condition safe)
+reviewSchema.index({ movieId: 1, userId: 1 }, { unique: true });
+
 // Virtual field to expose _id as id
 reviewSchema.virtual('id').get(function() {
   return this._id.toString();

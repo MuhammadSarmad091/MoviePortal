@@ -2,6 +2,23 @@ const Review = require('../models/Review');
 const Movie = require('../models/Movie');
 const mongoose = require('mongoose');
 
+// Pagination configuration
+const MAX_PAGE = 1000;
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 10;
+
+/**
+ * Validate and cap pagination parameters to prevent DoS attacks
+ * @param {number} page - Requested page number
+ * @param {number} limit - Requested limit per page
+ * @returns {object} - Validated page and limit
+ */
+const validatePagination = (page, limit) => {
+  page = Math.max(1, Math.min(parseInt(page) || 1, MAX_PAGE));
+  limit = Math.max(1, Math.min(parseInt(limit) || DEFAULT_LIMIT, MAX_LIMIT));
+  return { page, limit };
+};
+
 async function updateMovieRating(movieId) {
   // Robust match: compare stringified movieId so aggregation works whether
   // reviews.movieId is stored as ObjectId or as a string.
@@ -25,8 +42,7 @@ async function updateMovieRating(movieId) {
 const getReviewsForMovie = async (req, res, next) => {
   try {
     const { id } = req.params; // movie id
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = validatePagination(req.query.page, req.query.limit);
     const skip = (page - 1) * limit;
 
     const reviews = await Review.find({ movieId: id })

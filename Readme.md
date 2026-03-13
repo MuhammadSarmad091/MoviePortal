@@ -138,6 +138,20 @@ docker-compose down
 docker-compose down -v
 ```
 
+### Common Docker Commands
+
+```bash
+# Rebuild images without cache
+docker-compose build --no-cache
+
+# Restart services
+docker-compose restart
+
+# Check status
+docker-compose ps
+```
+
+---
 
 ## Section 2: Manual Setup with npm
 
@@ -151,7 +165,7 @@ cd backend
 npm install
 
 # Start the development server
-npm run dev
+npm start
 
 # Start production server
 npm start
@@ -173,13 +187,6 @@ npm run dev
 
 # Frontend will run on: http://localhost:5173
 ```
-
-### Access the Application
-
-- **Frontend (dev)**: http://localhost:5173
-- **Backend API**: http://localhost:5000/api
-
----
 
 ## Section 3: Running Test Cases
 

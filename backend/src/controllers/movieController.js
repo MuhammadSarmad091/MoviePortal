@@ -1,10 +1,26 @@
 const Movie = require('../models/Movie');
 const Review = require('../models/Review');
 
+// Pagination configuration
+const MAX_PAGE = 1000;
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 10;
+
+/**
+ * Validate and cap pagination parameters to prevent DoS attacks
+ * @param {number} page - Requested page number
+ * @param {number} limit - Requested limit per page
+ * @returns {object} - Validated page and limit
+ */
+const validatePagination = (page, limit) => {
+  page = Math.max(1, Math.min(parseInt(page) || 1, MAX_PAGE));
+  limit = Math.max(1, Math.min(parseInt(limit) || DEFAULT_LIMIT, MAX_LIMIT));
+  return { page, limit };
+};
+
 const getAllMovies = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = validatePagination(req.query.page, req.query.limit);
     const skip = (page - 1) * limit;
 
     const movies = await Movie.find()
@@ -174,8 +190,7 @@ const deleteMovie = async (req, res, next) => {
 const searchMovies = async (req, res, next) => {
   try {
     const { title } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = validatePagination(req.query.page, req.query.limit);
     const skip = (page - 1) * limit;
 
     if (!title) {
@@ -208,8 +223,7 @@ const searchMovies = async (req, res, next) => {
 
 const getRankedMovies = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = validatePagination(req.query.page, req.query.limit);
     const skip = (page - 1) * limit;
 
     // Aggregation pipeline to get movies with review counts and rankings

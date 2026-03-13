@@ -44,6 +44,10 @@ const movieSchema = new mongoose.Schema({
   }
 });
 
+// Index for query performance on userId
+movieSchema.index({ userId: 1 });
+movieSchema.index({ createdAt: -1 }); // For sorting
+
 // Virtual field to expose _id as id
 movieSchema.virtual('id').get(function() {
   return this._id.toString();
