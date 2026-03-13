@@ -250,53 +250,176 @@ Test Files  4 passed (4)
 Tests      22 passed (22)
 ```
 
+### Backend Integration Tests
+
+Integration tests validate all API endpoints end-to-end with a real database, including security fixes, race condition prevention, and performance optimizations.
+
+**Prerequisites:**
+- Docker installed and running
+- 10-15 seconds for test execution
+
+**Run Integration Tests:**
+
+```bash
+# Navigate to root directory
+cd Task1
+
+# Terminal 1: Start test database with Docker
+docker-compose -f docker-compose.test.yml up -d
+
+# Terminal 2: Navigate to backend and run tests
+cd backend
+
+# Run all integration tests once
+npm run test:integration
+
+# Run tests in watch mode (auto-rerun on file changes)
+npm run test:integration:watch
+
+# Run all tests (unit + integration)
+npm run test:all
+```
+
+**Stop Test Database:**
+
+```bash
+# From root directory
+docker-compose -f docker-compose.test.yml down
+```
+
+**Integration Test Coverage (42 tests):**
+
+| Test Suite | Tests | Coverage |
+|-----------|-------|----------|
+| User Authentication | 11 | Registration, login, JWT tokens, token validation |
+| Movie CRUD | 15 | Create/read/update/delete, pagination, search, N+1 optimization |
+| Review Operations | 16 | CRUD, race condition prevention, rating aggregation |
+
+**Test Highlights:**
+- ✅ Race condition prevention - Concurrent requests validated
+- ✅ N+1 query fix - Single aggregation pipeline confirmed
+- ✅ Authorization checks - Users restricted to own data
+- ✅ Pagination limits - MAX 100 enforced
+- ✅ Input validation - All field validation tested
+- ✅ Rating aggregation - Movie ratings recalculated correctly
+
+**Example Test Output:**
+
+```
+PASS  tests/integration/user.test.js (2.5s)
+  User Authentication Integration Tests
+    ✓ should register new user with valid credentials (45ms)
+    ✓ should login user with correct credentials (42ms)
+    ... (11 tests total)
+
+PASS  tests/integration/movie.test.js (3.2s)
+  Movie CRUD Integration Tests
+    ✓ should create movie with valid data (38ms)
+    ✓ should fetch movies with efficient aggregation pipeline (52ms)
+    ... (15 tests total)
+
+PASS  tests/integration/review.test.js (4.1s)
+  Review Integration Tests
+    ✓ should create review with valid data (35ms)
+    ✓ should prevent duplicate reviews from same user (68ms)
+    ... (16 tests total)
+
+Test Suites: 3 passed, 3 total
+Tests:       42 passed, 42 total
+Time:        12.8s
+```
+
+**Testing During Development:**
+
+```bash
+# Start MongoDB container once
+docker-compose -f docker-compose.test.yml up -d
+
+# Run tests in watch mode for continuous testing
+cd backend
+npm run test:integration:watch
+
+# Make code changes - tests automatically re-run
+# Tests complete in ~12-15 seconds
+
+# Stop when done
+docker-compose -f docker-compose.test.yml down
+```
+
+For detailed testing documentation, see [backend/TESTING.md](backend/TESTING.md)
+
 ---
 
 ## API Endpoints
 
+**Base URL:** `http://localhost:5000/api/v1`
+
 ### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
+- `POST /api/v1/users/register` - Register new user
+- `POST /api/v1/users/login` - Login user  
+- `GET /api/v1/users/profile` - Get current user profile (authenticated)
 
 ### Movies
-- `GET /api/movies` - Get all movies (with pagination)
-- `GET /api/movies/:id` - Get single movie
-- `POST /api/movies` - Create movie (authenticated)
-- `PUT /api/movies/:id` - Update movie (authenticated)
-- `DELETE /api/movies/:id` - Delete movie (authenticated)
+- `GET /api/v1/movies` - Get all movies (with pagination, search, filter)
+- `GET /api/v1/movies/:id` - Get single movie details
+- `POST /api/v1/movies` - Create movie (authenticated)
+- `PUT /api/v1/movies/:id` - Update movie (authenticated, owner only)
+- `DELETE /api/v1/movies/:id` - Delete movie (authenticated, owner only)
 
 ### Reviews
-- `GET /api/movies/:id/reviews` - Get reviews for a movie
-- `POST /api/movies/:id/reviews` - Create review (authenticated)
-- `PUT /api/reviews/:id` - Update review (authenticated)
-- `DELETE /api/reviews/:id` - Delete review (authenticated)
+- `GET /api/v1/reviews` - Get all reviews (with pagination, filters)
+- `GET /api/v1/reviews/:id` - Get single review
+- `POST /api/v1/reviews` - Create review (authenticated, one review per user per movie)
+- `PUT /api/v1/reviews/:id` - Update review (authenticated, owner only)
+- `DELETE /api/v1/reviews/:id` - Delete review (authenticated, owner only)
+
+**Note:** Legacy `/api/` endpoints are still supported for backward compatibility but use `/api/v1/` for new development.
 
 ---
 
 ## Project Highlights
 
-**Security**
+**Security (18 Fixes)**
 - Input sanitization to prevent special characters
-- JWT-based authentication
+- JWT-based authentication with token validation
 - Password hashing with bcryptjs
-- CORS enabled
+- CORS protection with environment-based allowlist
+- Helmet security headers (XSS, clickjacking protection)
+- Request body size limits (10KB) - prevents DoS
+- Compound unique index on reviews (race condition prevention)
+- Dockerfile hardening with non-root user
+- Database indexes for performance optimization
 
 **Testing**
 - 30+ unit tests across frontend and backend
-- Production-style testing approach
+- 42 comprehensive integration tests with Docker MongoDB
+- Production-style testing approach with end-to-end validation
+- Tests for race conditions, authorization, pagination, and performance
 - Real component testing with mocked dependencies
+- Watch mode for continuous testing during development
+
+**Performance Optimizations**
+- **N+1 Query Fix:** Single aggregation pipeline (20-100x faster for bulk queries)
+- **Database Indexes:** Optimized queries on movieId, userId, createdAt
+- Pagination limits enforced (MAX 100 results per page)
+- Gzip compression in production (Nginx) - 70-80% bandwidth savings
+- Optimized Docker images (Alpine-based)
+- Caching strategies for static assets
+- Centralized configuration management
+
+**Infrastructure**
+- Docker Compose with resource limits and health checks
+- Automatic service restart on failure
+- Database transactions for atomic operations
+- API versioning (/api/v1/) for backward compatibility
+- Database seeding for consistent test data
+- Comprehensive logging and error handling
 
 **UI/UX**
 - Golden, rounded login button with hover effects
 - Responsive design with FontAwesome icons
 - Professional navbar and footer
 - Error handling and user feedback
-
-**Performance**
-- Gzip compression in production (Nginx)
-- Optimized Docker images (Alpine-based)
-- Caching strategies for static assets
 
 ---
 

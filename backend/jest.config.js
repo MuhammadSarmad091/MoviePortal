@@ -14,6 +14,10 @@ module.exports = {
       statements: 50
     }
   },
-  testMatch: ['**/src/**/*.test.js'],
+  testMatch: [
+    '**/src/**/*.test.js',
+    '**/tests/integration/**/*.test.js'
+  ],
+  testTimeout: 30000,
   verbose: true
 };
