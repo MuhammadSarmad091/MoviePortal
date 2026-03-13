@@ -16,6 +16,24 @@ services:
     networks:
       - movie_app_network
     restart: unless-stopped
+    
+    # Health check for automatic restart on failure
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    # Resource limits to prevent runaway processes
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
 
   frontend:
     build:
@@ -23,14 +41,33 @@ services:
       dockerfile: Dockerfile
     container_name: movie_app_frontend
     environment:
-      VITE_API_BASE_URL: http://localhost:5000/api
+      VITE_API_BASE_URL: http://localhost:5000/api/v1
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - movie_app_network
     restart: unless-stopped
+    
+    # Health check for nginx
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    # Resource limits for nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
 networks:
   movie_app_network:

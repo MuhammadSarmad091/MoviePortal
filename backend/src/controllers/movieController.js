@@ -23,27 +23,58 @@ const getAllMovies = async (req, res, next) => {
     const { page, limit } = validatePagination(req.query.page, req.query.limit);
     const skip = (page - 1) * limit;
 
-    const movies = await Movie.find()
-      .populate('userId', 'username')
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
-
-    // Get review count for each movie
-    const moviesWithReviewCount = await Promise.all(
-      movies.map(async (movie) => {
-        const reviewCount = await Review.countDocuments({ movieId: movie._id });
-        return {
-          ...movie.toJSON(),
-          reviewCount
-        };
-      })
-    );
+    // Optimized aggregation pipeline: single query instead of N+1
+    // Avoids N+1 problem by joining with reviews and counting in one query
+    const moviesWithCounts = await Movie.aggregate([
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'movieId',
+          as: 'reviews'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $addFields: {
+          reviewCount: { $size: '$reviews' },
+          user: { $arrayElemAt: ['$user', 0] },
+          id: { $toString: '$_id' }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          id: 1,
+          title: 1,
+          description: 1,
+          releaseDate: 1,
+          posterUrl: 1,
+          trailerUrl: 1,
+          ratings: 1,
+          reviewCount: 1,
+          userId: 1,
+          user: { username: '$user.username', _id: '$user._id' },
+          createdAt: 1,
+          updatedAt: 1
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit }
+    ]);
 
     const total = await Movie.countDocuments();
 
     res.json({
-      movies: moviesWithReviewCount,
+      movies: moviesWithCounts,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
@@ -160,29 +191,43 @@ const updateMovie = async (req, res, next) => {
 };
 
 const deleteMovie = async (req, res, next) => {
+  const session = await Movie.startSession();
+  session.startTransaction();
+  
   try {
     const { id } = req.params;
 
-    const movie = await Movie.findById(id);
+    const movie = await Movie.findById(id).session(session);
 
     if (!movie) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: 'Movie not found' });
     }
 
     // Check if user is the owner
     if (movie.userId.toString() !== req.userId) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(403).json({ message: 'You are not authorized to delete this movie' });
     }
 
-    // Delete all reviews associated with the movie
-    await Review.deleteMany({ movieId: id });
+    // Delete all reviews associated with the movie (within transaction)
+    await Review.deleteMany({ movieId: id }).session(session);
 
-    await Movie.findByIdAndDelete(id);
+    // Delete the movie (within transaction)
+    await Movie.findByIdAndDelete(id).session(session);
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
 
     res.json({
       message: 'Movie deleted successfully'
     });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     next(error);
   }
 };

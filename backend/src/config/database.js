@@ -1,17 +1,18 @@
 const mongoose = require('mongoose');
+const { config } = require('./environment');
 
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGODB_URI;
+    const mongoUri = config.database.mongoUri;
     
     if (!mongoUri) {
       throw new Error('MONGODB_URI is not defined in environment variables');
     }
 
     await mongoose.connect(mongoUri);
-    console.log('MongoDB connected successfully');
+    console.log('✅ MongoDB connected successfully');
   } catch (error) {
-    console.error('MongoDB connection error:', error.message);
+    console.error('❌ MongoDB connection error:', error.message);
     process.exit(1);
   }
 };
