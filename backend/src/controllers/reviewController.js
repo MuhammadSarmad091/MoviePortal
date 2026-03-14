@@ -31,10 +31,8 @@ async function updateMovieRating(movieId) {
   if (stats.length > 0) {
     const { avgRating, count } = stats[0];
     const rounded = Math.round((avgRating + Number.EPSILON) * 10) / 10 // one decimal
-    console.log(`updateMovieRating: movieId=${movieId} count=${count} avg=${avgRating} rounded=${rounded}`)
     await Movie.findByIdAndUpdate(movieId, { ratings: rounded });
   } else {
-    console.log(`updateMovieRating: movieId=${movieId} no reviews, setting 0`)
     await Movie.findByIdAndUpdate(movieId, { ratings: 0 });
   }
 }
