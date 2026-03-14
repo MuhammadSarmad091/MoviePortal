@@ -37,17 +37,28 @@
           for="password"
           class="form-label"
         >Password</label>
-        <input
-          id="password"
-          v-model="form.password"
-          @input="onPasswordInput"
-          @blur="validatePassword"
-          type="password"
-          placeholder="Enter your password"
-          class="form-input"
-          :class="{ 'input-error': errors.password }"
-          required
-        >
+        <div class="password-input-wrapper">
+          <input
+            id="password"
+            v-model="form.password"
+            @input="onPasswordInput"
+            @blur="validatePassword"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="Enter your password"
+            class="form-input"
+            :class="{ 'input-error': errors.password }"
+            required
+          >
+          <button
+            type="button"
+            @click="showPassword = !showPassword"
+            class="password-toggle-btn"
+            :title="showPassword ? 'Hide password' : 'Show password'"
+            tabindex="-1"
+          >
+            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+          </button>
+        </div>
         <p
           v-if="errors.password"
           class="error-message"
@@ -126,6 +137,8 @@ import { validateLoginForm } from '../../utils/validation';
 const router = useRouter();
 const route = useRoute();
 const { login, loading: isLoading, error: authError, clearError } = useAuth();
+
+const showPassword = ref(false);
 
 const form = reactive({
   email: '',
@@ -211,6 +224,40 @@ const onPasswordInput = () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 2.75rem;
+  width: 100%;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+}
+
+.password-toggle-btn:hover {
+  color: var(--accent-gold);
+}
+
+.password-toggle-btn:focus {
+  outline: none;
 }
 
 .form-label {

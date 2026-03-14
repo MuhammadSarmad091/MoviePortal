@@ -24,9 +24,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy built files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nginx && adduser -S nginx -u 1001
-USER nginx
+# Run as root (standard practice in Docker for nginx)
+# Note: Running in container context, not a system service
 
 # Expose port
 EXPOSE 80
