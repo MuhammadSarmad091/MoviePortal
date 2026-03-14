@@ -1,89 +1,119 @@
 <template>
-  <div class="share-button-container" ref="container">
+  <div
+    class="share-button-container"
+    ref="container"
+  >
     <button
       class="share-button"
       @click="toggleShareMenu"
       title="Share this movie"
     >
-      <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+      <i
+        class="fa-solid fa-share-nodes"
+        aria-hidden="true"
+      />
     </button>
 
-    <div v-if="showShareMenu" class="share-menu">
-      <button class="share-option" @click="shareToClipboard">
-        <i class="fa-solid fa-clipboard" aria-hidden="true"></i>
+    <div
+      v-if="showShareMenu"
+      class="share-menu"
+    >
+      <button
+        class="share-option"
+        @click="shareToClipboard"
+      >
+        <i
+          class="fa-solid fa-clipboard"
+          aria-hidden="true"
+        />
         Copy Link
       </button>
-      <button class="share-option" @click="shareToTwitter">
-        <i class="fa-brands fa-twitter" aria-hidden="true"></i>
+      <button
+        class="share-option"
+        @click="shareToTwitter"
+      >
+        <i
+          class="fa-brands fa-twitter"
+          aria-hidden="true"
+        />
         Twitter
       </button>
-      <button class="share-option" @click="shareToFacebook">
-        <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+      <button
+        class="share-option"
+        @click="shareToFacebook"
+      >
+        <i
+          class="fa-brands fa-facebook-f"
+          aria-hidden="true"
+        />
         Facebook
       </button>
     </div>
 
-    <div v-if="copied" class="copied-message">
+    <div
+      v-if="copied"
+      class="copied-message"
+    >
       ✓ Copied to clipboard
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
   movie: {
     type: Object,
     required: true
   }
-})
+});
 
-const showShareMenu = ref(false)
-const copied = ref(false)
-const container = ref(null)
+const showShareMenu = ref(false);
+const copied = ref(false);
+const container = ref(null);
 
 const onDocumentClick = (e) => {
-  if (!container.value) return
-  if (container.value.contains(e.target)) return
+  if (!container.value) return;
+  if (container.value.contains(e.target)) return;
   // clicked outside
-  showShareMenu.value = false
-}
+  showShareMenu.value = false;
+};
 
-onMounted(() => document.addEventListener('click', onDocumentClick))
-onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick))
+onMounted(() => document.addEventListener('click', onDocumentClick));
+onBeforeUnmount(() => document.removeEventListener('click', onDocumentClick));
 
 const movieUrl = computed(() => {
-  return `${window.location.origin}/movie/${props.movie.id || props.movie._id}`
-})
+  return `${window.location.origin}/movie/${props.movie.id || props.movie._id}`;
+});
 
 const toggleShareMenu = () => {
-  showShareMenu.value = !showShareMenu.value
-}
+  showShareMenu.value = !showShareMenu.value;
+};
 
 const shareToClipboard = () => {
-  const text = `Check out "${props.movie.title}" on MoviesPortal: ${movieUrl.value}`
+  const text = `Check out "${props.movie.title}" on MoviesPortal: ${movieUrl.value}`;
   navigator.clipboard.writeText(text).then(() => {
-    copied.value = true
+    copied.value = true;
     setTimeout(() => {
-      copied.value = false
-      showShareMenu.value = false
-    }, 2000)
-  })
-}
+      copied.value = false;
+      showShareMenu.value = false;
+    }, 2000);
+  });
+};
 
 const shareToTwitter = () => {
-  const text = `Check out "${props.movie.title}" on MoviesPortal!`
-  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(movieUrl.value)}`
-  window.open(url, '_blank')
-  showShareMenu.value = false
-}
+  const text = `Check out "${props.movie.title}" on MoviesPortal!`;
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(movieUrl.value)}`;
+  window.open(url, '_blank');
+  showShareMenu.value = false;
+};
 
 const shareToFacebook = () => {
-  const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(movieUrl.value)}`
-  window.open(url, '_blank')
-  showShareMenu.value = false
-}
+  const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(movieUrl.value)}`;
+  window.open(url, '_blank');
+  showShareMenu.value = false;
+};
 </script>
 
 <style scoped>

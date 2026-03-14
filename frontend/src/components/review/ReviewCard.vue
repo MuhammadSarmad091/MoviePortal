@@ -6,36 +6,65 @@
           {{ userInitials }}
         </div>
         <div class="user-details">
-          <h4 class="user-name">{{ review.userId.username }}</h4>
+          <h4 class="user-name">
+            {{ review.userId.username }}
+          </h4>
           <span class="review-date">{{ formattedDate }}</span>
         </div>
       </div>
 
-      <div v-if="isAuthor" class="review-actions">
-        <button class="action-button edit-button" @click="editReview" title="Edit review">
-          <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+      <div
+        v-if="isAuthor"
+        class="review-actions"
+      >
+        <button
+          class="action-button edit-button"
+          @click="editReview"
+          title="Edit review"
+        >
+          <i
+            class="fa-solid fa-pen-to-square"
+            aria-hidden="true"
+          />
         </button>
-        <button class="action-button delete-button" @click="deleteReview" title="Delete review">
-          <i class="fa-solid fa-trash" aria-hidden="true"></i>
+        <button
+          class="action-button delete-button"
+          @click="deleteReview"
+          title="Delete review"
+        >
+          <i
+            class="fa-solid fa-trash"
+            aria-hidden="true"
+          />
         </button>
       </div>
     </div>
 
     <div class="review-rating">
       <div class="stars">
-        <span v-for="i in 10" :key="i" class="star" :class="{ filled: i <= review.rating }">
-          <i class="fa-solid fa-star" aria-hidden="true"></i>
+        <span
+          v-for="i in 10"
+          :key="i"
+          class="star"
+          :class="{ filled: i <= review.rating }"
+        >
+          <i
+            class="fa-solid fa-star"
+            aria-hidden="true"
+          />
         </span>
       </div>
       <span class="rating-text">{{ review.rating }}/10</span>
     </div>
 
-    <p class="review-content">{{ review.content }}</p>
+    <p class="review-content">
+      {{ review.content }}
+    </p>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
   review: {
@@ -47,31 +76,31 @@ const props = defineProps({
     type: Boolean,
     default: false
   }
-})
+});
 
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete']);
 
 const formattedDate = computed(() => {
-  const date = new Date(props.review.createdAt)
+  const date = new Date(props.review.createdAt);
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
-  })
-})
+  });
+});
 
 const userInitials = computed(() => {
-  const username = props.review.userId.username || 'U'
-  return username.substring(0, 2).toUpperCase()
-})
+  const username = props.review.userId.username || 'U';
+  return username.substring(0, 2).toUpperCase();
+});
 
 const editReview = () => {
-  emit('edit', props.review)
-}
+  emit('edit', props.review);
+};
 
 const deleteReview = () => {
-  emit('delete', props.review.id)
-}
+  emit('delete', props.review.id);
+};
 </script>
 
 <style scoped>

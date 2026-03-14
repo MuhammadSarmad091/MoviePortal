@@ -1,71 +1,91 @@
 <template>
-  <div v-if="hasError" class="error-boundary">
+  <div
+    v-if="hasError"
+    class="error-boundary"
+  >
     <div class="error-container">
       <div class="error-icon">
-        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <i
+          class="fa-solid fa-circle-exclamation"
+          aria-hidden="true"
+        />
       </div>
       <h2>Something Went Wrong</h2>
-      <p class="error-message">{{ errorMessage }}</p>
-      <div class="error-details" v-if="showDetails && error">
+      <p class="error-message">
+        {{ errorMessage }}
+      </p>
+      <div
+        class="error-details"
+        v-if="showDetails && error"
+      >
         <pre>{{ error }}</pre>
       </div>
       <div class="error-actions">
-        <button @click="resetError" class="btn-primary">
+        <button
+          @click="resetError"
+          class="btn-primary"
+        >
           Try Again
         </button>
-        <button @click="goHome" class="btn-secondary">
+        <button
+          @click="goHome"
+          class="btn-secondary"
+        >
           Go to Home
         </button>
-        <button @click="toggleDetails" class="btn-tertiary">
+        <button
+          @click="toggleDetails"
+          class="btn-tertiary"
+        >
           {{ showDetails ? 'Hide' : 'Show' }} Details
         </button>
       </div>
     </div>
   </div>
-  <slot v-else></slot>
+  <slot v-else />
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-const hasError = ref(false)
-const error = ref(null)
-const errorMessage = ref('An unexpected error occurred.')
-const showDetails = ref(false)
-const router = useRouter()
+const hasError = ref(false);
+const error = ref(null);
+const errorMessage = ref('An unexpected error occurred.');
+const showDetails = ref(false);
+const router = useRouter();
 
 // Expose methods for parent to call
 const setError = (err) => {
-  error.value = err
-  errorMessage.value = err?.message || 'An unexpected error occurred.'
-  hasError.value = true
-  showDetails.value = false
+  error.value = err;
+  errorMessage.value = err?.message || 'An unexpected error occurred.';
+  hasError.value = true;
+  showDetails.value = false;
   // Log to console for debugging
-  console.error('Error Boundary caught:', err)
-}
+  console.error('Error Boundary caught:', err);
+};
 
 const resetError = () => {
-  hasError.value = false
-  error.value = null
-  errorMessage.value = ''
-  showDetails.value = false
-}
+  hasError.value = false;
+  error.value = null;
+  errorMessage.value = '';
+  showDetails.value = false;
+};
 
 const toggleDetails = () => {
-  showDetails.value = !showDetails.value
-}
+  showDetails.value = !showDetails.value;
+};
 
 const goHome = () => {
-  resetError()
-  router.push('/')
-}
+  resetError();
+  router.push('/');
+};
 
 defineExpose({
   setError,
   resetError,
   hasError
-})
+});
 </script>
 
 <style scoped>
@@ -132,7 +152,9 @@ h2 {
   flex-wrap: wrap;
 }
 
-.btn-primary, .btn-secondary, .btn-tertiary {
+.btn-primary,
+.btn-secondary,
+.btn-tertiary {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;

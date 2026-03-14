@@ -5,7 +5,10 @@
       :disabled="currentPage === 1"
       @click="goToPage(currentPage - 1)"
     >
-      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      <i
+        class="fa-solid fa-arrow-left"
+        aria-hidden="true"
+      />
       Previous
     </button>
 
@@ -19,35 +22,38 @@
       @click="goToPage(currentPage + 1)"
     >
       Next
-      <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      <i
+        class="fa-solid fa-arrow-right"
+        aria-hidden="true"
+      />
     </button>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps({
   currentPage: {
     type: Number,
-    required: true,
+    required: true
   },
   totalPages: {
     type: Number,
-    required: true,
-  },
-})
+    required: true
+  }
+});
 
-const emit = defineEmits(['page-change'])
+const emit = defineEmits(['page-change']);
 
-const canGoPrevious = computed(() => props.currentPage > 1)
-const canGoNext = computed(() => props.currentPage < props.totalPages)
+const canGoPrevious = computed(() => props.currentPage > 1);
+const canGoNext = computed(() => props.currentPage < props.totalPages);
 
 const goToPage = (page) => {
   if (page >= 1 && page <= props.totalPages && page !== props.currentPage) {
-    emit('page-change', page)
+    emit('page-change', page);
   }
-}
+};
 </script>
 
 <style scoped>

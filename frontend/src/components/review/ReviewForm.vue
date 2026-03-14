@@ -1,5 +1,8 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="review-form">
+  <form
+    @submit.prevent="handleSubmit"
+    class="review-form"
+  >
     <h3>{{ isEditing ? 'Edit Your Review' : 'Add Your Review' }}</h3>
 
     <!-- Rating -->
@@ -17,15 +20,24 @@
           @mouseleave="hoverRating = 0"
           :title="`Rate ${i} stars`"
         >
-          <i class="fa-solid fa-star" aria-hidden="true"></i>
+          <i
+            class="fa-solid fa-star"
+            aria-hidden="true"
+          />
         </button>
       </div>
-      <span class="rating-display" v-if="form.rating">{{ form.rating }}/10</span>
+      <span
+        class="rating-display"
+        v-if="form.rating"
+      >{{ form.rating }}/10</span>
     </div>
 
     <!-- Review Content -->
     <div class="form-group">
-      <label for="content" class="form-label">Your Review *</label>
+      <label
+        for="content"
+        class="form-label"
+      >Your Review *</label>
       <textarea
         id="content"
         v-model="form.content"
@@ -33,21 +45,38 @@
         class="form-textarea"
         :class="{ 'input-error': errors.content }"
         required
-      ></textarea>
-      <p v-if="errors.content" class="error-message">{{ errors.content }}</p>
+      />
+      <p
+        v-if="errors.content"
+        class="error-message"
+      >
+        {{ errors.content }}
+      </p>
     </div>
 
     <!-- General Error -->
-    <div v-if="error" class="error-box">
+    <div
+      v-if="error"
+      class="error-box"
+    >
       {{ error }}
     </div>
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <button type="button" class="btn-secondary" @click="resetForm" :disabled="isLoading">
+      <button
+        type="button"
+        class="btn-secondary"
+        @click="resetForm"
+        :disabled="isLoading"
+      >
         Cancel
       </button>
-      <button type="submit" class="btn-primary" :disabled="isLoading">
+      <button
+        type="submit"
+        class="btn-primary"
+        :disabled="isLoading"
+      >
         <span v-if="!isLoading">
           {{ isEditing ? 'Update Review' : 'Post Review' }}
         </span>
@@ -58,7 +87,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue';
 
 const props = defineProps({
   initialReview: {
@@ -69,78 +98,82 @@ const props = defineProps({
     type: Boolean,
     default: false
   }
-})
+});
 
-const emit = defineEmits(['submit', 'cancel'])
+const emit = defineEmits(['submit', 'cancel']);
 
 const form = reactive({
   rating: props.initialReview?.rating || 0,
   content: props.initialReview?.content || ''
-})
+});
 
 const errors = reactive({
   rating: '',
   content: ''
-})
+});
 
-const error = ref(null)
+const error = ref(null);
 
-const isEditing = ref(!!props.initialReview)
+const isEditing = ref(!!props.initialReview);
 
-const hoverRating = ref(0)
+const hoverRating = ref(0);
 
 // Watch for changes to initialReview to update the form
-watch(() => props.initialReview, (newReview) => {
-  if (newReview) {
-    form.rating = newReview.rating || 0
-    form.content = newReview.content || ''
-    isEditing.value = true
-  } else {
-    form.rating = 0
-    form.content = ''
-    isEditing.value = false
-  }
-}, { deep: true })
+watch(
+  () => props.initialReview,
+  (newReview) => {
+    if (newReview) {
+      form.rating = newReview.rating || 0;
+      form.content = newReview.content || '';
+      isEditing.value = true;
+    } else {
+      form.rating = 0;
+      form.content = '';
+      isEditing.value = false;
+    }
+  },
+  { deep: true }
+);
 
 const validateForm = () => {
-  let isValid = true
+  let isValid = true;
 
-  errors.rating = ''
-  errors.content = ''
-  error.value = null
+  errors.rating = '';
+  errors.content = '';
+  error.value = null;
 
   if (form.rating === 0) {
-    errors.rating = 'Please select a rating'
-    isValid = false
+    errors.rating = 'Please select a rating';
+    isValid = false;
   }
 
   if (!form.content.trim()) {
-    errors.content = 'Review content is required'
-    isValid = false
+    errors.content = 'Review content is required';
+    isValid = false;
   } else if (form.content.trim().length < 20) {
-    errors.content = 'Review must be at least 20 characters'
-    isValid = false
+    errors.content = 'Review must be at least 20 characters';
+    isValid = false;
   }
 
-  return isValid
-}
+  return isValid;
+};
 
 const handleSubmit = () => {
   if (!validateForm()) {
-    return
+    return;
   }
 
   emit('submit', {
     ...form,
     isEditing: isEditing.value
-  })
-}
+  });
+};
 
 const resetForm = () => {
-  form.rating = props.initialReview?.rating || 0
-  form.content = props.initialReview?.content || ''
-  emit('cancel')
-}
+  form.rating = props.initialReview?.rating || 0;
+  form.content = props.initialReview?.content || '';
+  emit('cancel');
+};
 </script>
 
 <style scoped>
@@ -209,7 +242,9 @@ h3 {
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
   font-family: var(--font-family);
   resize: vertical;
   min-height: 120px;

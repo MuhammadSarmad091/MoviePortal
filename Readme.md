@@ -284,6 +284,35 @@ npm run test:all
 docker-compose -f docker-compose.test.yml down
 ```
 
+## Section 4: Code Quality
+
+### Frontend Linting and Formatting
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Run ESLint to check code quality
+npm run lint
+
+# Automatically fix linting errors
+npm run lint -- --fix
+
+# Format code with Prettier
+npm run format
+```
+
+**ESLint Configuration:** `.eslintrc.cjs`
+- Vue 3 recommended rules
+- Catches common errors and code quality issues
+
+**Prettier Configuration:** `.prettierrc.json`
+- 2-space indentation
+- Single quotes
+- 100 character line width
+
+---
+
 **Integration Test Coverage (42 tests):**
 
 | Test Suite | Tests | Coverage |

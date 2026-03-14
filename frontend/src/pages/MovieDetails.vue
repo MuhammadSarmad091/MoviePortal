@@ -1,32 +1,64 @@
 <template>
   <div class="movie-details-container">
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
+    <div
+      v-if="loading"
+      class="loading-state"
+    >
+      <div class="spinner" />
       <p>Loading movie details...</p>
     </div>
 
-    <div v-else-if="error" class="error-state">
-      <span class="error-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+    <div
+      v-else-if="error"
+      class="error-state"
+    >
+      <span class="error-icon"><i
+        class="fa-solid fa-triangle-exclamation"
+        aria-hidden="true"
+      /></span>
       <p>{{ error }}</p>
-      <button @click="goBack" class="btn-secondary">
-        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      <button
+        @click="goBack"
+        class="btn-secondary"
+      >
+        <i
+          class="fa-solid fa-arrow-left"
+          aria-hidden="true"
+        />
         Go Back
       </button>
     </div>
 
-    <div v-else-if="movie" class="movie-details">
+    <div
+      v-else-if="movie"
+      class="movie-details"
+    >
       <!-- Back Button and Actions -->
       <div class="details-header">
-          <button class="btn-back" @click="goBack"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back</button>
+        <button
+          class="btn-back"
+          @click="goBack"
+        >
+          <i
+            class="fa-solid fa-arrow-left"
+            aria-hidden="true"
+          /> Back
+        </button>
         <div class="header-actions">
-          <share-button :movie="movieWithDefaults" style="--share-button-color: #fff" />
+          <share-button
+            :movie="movieWithDefaults"
+            style="--share-button-color: #fff"
+          />
           <button
             v-if="isMovieOwner"
             class="btn-secondary"
             @click="openEditModal"
             title="Edit this movie"
           >
-            <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+            <i
+              class="fa-solid fa-pen-to-square"
+              aria-hidden="true"
+            />
             Edit
           </button>
           <button
@@ -35,7 +67,10 @@
             @click="deleteMovie"
             title="Delete this movie"
           >
-            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            <i
+              class="fa-solid fa-trash"
+              aria-hidden="true"
+            />
             Delete
           </button>
         </div>
@@ -50,32 +85,64 @@
             class="poster-image"
             @error="handleImageError"
             v-if="movieWithDefaults.posterUrl"
-          />
-          <div v-else class="card-image-placeholder">
-            <i class="placeholder-icon fa-solid fa-film" aria-hidden="true"></i>
+          >
+          <div
+            v-else
+            class="card-image-placeholder"
+          >
+            <i
+              class="placeholder-icon fa-solid fa-film"
+              aria-hidden="true"
+            />
           </div>
-          <div v-if="!posterLoaded" class="poster-placeholder">
-            <i class="fa-solid fa-film" aria-hidden="true"></i>
+          <div
+            v-if="!posterLoaded"
+            class="poster-placeholder"
+          >
+            <i
+              class="fa-solid fa-film"
+              aria-hidden="true"
+            />
           </div>
         </div>
 
         <div class="movie-info">
-          <h1 class="movie-title">{{ movieWithDefaults.title }}</h1>
+          <h1 class="movie-title">
+            {{ movieWithDefaults.title }}
+          </h1>
 
-            <div class="movie-meta">
+          <div class="movie-meta">
             <span class="release-year">{{ movieWithDefaults.releaseYear }}</span>
-            <span class="duration"><i class="fa-solid fa-clock" aria-hidden="true"></i> {{ movieWithDefaults.duration }} min</span>
+            <span class="duration"><i
+                                     class="fa-solid fa-clock"
+                                     aria-hidden="true"
+                                   />
+              {{ movieWithDefaults.duration }} min</span>
             <span class="rating">
-              <span class="stars"><i class="fa-solid fa-star" aria-hidden="true"></i> {{ Number(movieWithDefaults.rating).toFixed(1) }}/10</span>
+              <span class="stars"><i
+                                    class="fa-solid fa-star"
+                                    aria-hidden="true"
+                                  />
+                {{ Number(movieWithDefaults.rating).toFixed(1) }}/10</span>
             </span>
-            <span v-if="movieRank" class="rank-badge">
-              <i class="fa-solid fa-trophy" aria-hidden="true"></i> Rank #{{ movieRank }}
+            <span
+              v-if="movieRank"
+              class="rank-badge"
+            >
+              <i
+                class="fa-solid fa-trophy"
+                aria-hidden="true"
+              /> Rank #{{ movieRank }}
             </span>
           </div>
 
           <!-- Genres -->
           <div class="genres-container">
-            <span v-for="genre in movieWithDefaults.genres" :key="genre" class="genre-tag">
+            <span
+              v-for="genre in movieWithDefaults.genres"
+              :key="genre"
+              class="genre-tag"
+            >
               {{ genre }}
             </span>
           </div>
@@ -83,23 +150,42 @@
           <!-- Synopsis -->
           <div class="synopsis-section">
             <h3>Synopsis</h3>
-            <p class="synopsis">{{ movieWithDefaults.synopsis }}</p>
+            <p class="synopsis">
+              {{ movieWithDefaults.synopsis }}
+            </p>
           </div>
 
           <!-- Cast & Crew -->
           <div class="cast-crew">
-            <div v-if="addedBy" class="crew-item">
+            <div
+              v-if="addedBy"
+              class="crew-item"
+            >
               <strong>Added By:</strong> {{ addedBy }}
             </div>
-            <div v-if="movieWithDefaults.cast && movieWithDefaults.cast.length" class="crew-item">
-              <strong>Cast:</strong> {{ Array.isArray(movieWithDefaults.cast) ? movieWithDefaults.cast.join(', ') : movieWithDefaults.cast }}
+            <div
+              v-if="movieWithDefaults.cast && movieWithDefaults.cast.length"
+              class="crew-item"
+            >
+              <strong>Cast:</strong>
+              {{
+                Array.isArray(movieWithDefaults.cast)
+                  ? movieWithDefaults.cast.join(', ')
+                  : movieWithDefaults.cast
+              }}
             </div>
           </div>
 
           <!-- Action Buttons -->
           <div class="action-buttons">
-            <button class="btn-primary" @click="handleWatchNow">
-              <i class="fa-solid fa-play" aria-hidden="true"></i>
+            <button
+              class="btn-primary"
+              @click="handleWatchNow"
+            >
+              <i
+                class="fa-solid fa-play"
+                aria-hidden="true"
+              />
               Watch Now
             </button>
           </div>
@@ -107,15 +193,25 @@
       </div>
 
       <!-- Trailer Section -->
-      <div v-if="movieWithDefaults.trailerUrl" class="trailer-section">
+      <div
+        v-if="movieWithDefaults.trailerUrl"
+        class="trailer-section"
+      >
         <h2>Trailer</h2>
         <div class="trailer-container">
           <iframe
             :src="getYoutubeEmbedUrl(movieWithDefaults.trailerUrl)"
             class="trailer-iframe"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+            "
             allowfullscreen
-          ></iframe>
+          />
         </div>
       </div>
 
@@ -151,41 +247,41 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useApi } from '../composables/useApi'
-import { API_BASE_URL } from '../config'
 import ReviewList from '../components/review/ReviewList.vue'
 import ShareButton from '../components/buttons/ShareButton.vue'
 import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue'
 
-const route = useRoute()
-const router = useRouter()
-const { isAuthenticated, getCurrentUser } = useAuth()
-const { api } = useApi()
+const route = useRoute();
+const router = useRouter();
+const { isAuthenticated, getCurrentUser } = useAuth();
+const { api } = useApi();
 
 // State variables
-const movie = ref(null)
-const reviews = ref([])
-const loading = ref(true)
-const error = ref(null)
-const reviewError = ref(null)
-const posterLoaded = ref(true)
-const reviewsPage = ref(1)
-const reviewsPages = ref(1)
-const totalReviews = ref(0)
-const movieRank = ref(null)
-const showEditModal = ref(false)
+const movie = ref(null);
+const reviews = ref([]);
+const loading = ref(true);
+const error = ref(null);
+const reviewError = ref(null);
+const posterLoaded = ref(true);
+const reviewsPage = ref(1);
+const reviewsPages = ref(1);
+const totalReviews = ref(0);
+const movieRank = ref(null);
+const showEditModal = ref(false);
 
 // Get the movie ID from the route
 const movieId = computed(() => {
-  const id = route.params.id
-  return id
-})
+  const id = route.params.id;
+  return id;
+});
 
 // Computed properties with fallbacks for movie data
 const movieWithDefaults = computed(() => {
-  if (!movie.value) return null
+  if (!movie.value) return null;
   return {
     ...movie.value,
-    releaseYear: movie.value.releaseYear || new Date(movie.value.releaseDate).getFullYear() || 'N/A',
+    releaseYear:
+      movie.value.releaseYear || new Date(movie.value.releaseDate).getFullYear() || 'N/A',
     duration: movie.value.duration || '120',
     rating: movie.value.ratings || 0,
     genres: movie.value.genres || [],
@@ -194,136 +290,139 @@ const movieWithDefaults = computed(() => {
     cast: movie.value.cast || [],
     trailerUrl: movie.value.trailerUrl || null,
     posterUrl: movie.value.posterUrl || movie.value.poster || null
-  }
-})
+  };
+});
 
 // Check if current user is the owner of the movie
 const isMovieOwner = computed(() => {
-  if (!movie.value || !isAuthenticated.value) return false
-  const currentUser = getCurrentUser()
-  if (!currentUser) return false
-  
+  if (!movie.value || !isAuthenticated.value) return false;
+  const currentUser = getCurrentUser();
+  if (!currentUser) return false;
+
   // Compare user IDs - the movie.userId might be an object with _id or a string
-  const movieUserId = typeof movie.value.userId === 'string' 
-    ? movie.value.userId 
-    : movie.value.userId?._id || movie.value.userId?.id
-  
-  return currentUser.userId === movieUserId
-})
+  const movieUserId =
+    typeof movie.value.userId === 'string'
+      ? movie.value.userId
+      : movie.value.userId?._id || movie.value.userId?.id;
+
+  return currentUser.userId === movieUserId;
+});
 
 // Username of the user who added the movie (handles populated user object or plain id)
 const addedBy = computed(() => {
-  if (!movie.value || !movie.value.userId) return null
-  const u = movie.value.userId
-  if (typeof u === 'string') return u
-  return u.username || u.name || u.id || u._id || null
-})
+  if (!movie.value || !movie.value.userId) return null;
+  const u = movie.value.userId;
+  if (typeof u === 'string') return u;
+  return u.username || u.name || u.id || u._id || null;
+});
 
 // Function definitions - MUST BE BEFORE WATCH
 const fetchMovieDetails = async () => {
   try {
     if (!movieId.value) {
-      return
+      return;
     }
-    
-    loading.value = true
-    error.value = null
 
-    const response = await api.get(`/movies/${movieId.value}/with-rank`)
-    
+    loading.value = true;
+    error.value = null;
+
+    const response = await api.get(`/movies/${movieId.value}/with-rank`);
+
     // The backend returns { movie, reviewCount, rank }
-    movie.value = response.data.movie || response.data
-    movieRank.value = response.data.rank || null
-    posterLoaded.value = true
+    movie.value = response.data.movie || response.data;
+    movieRank.value = response.data.rank || null;
+    posterLoaded.value = true;
   } catch (err) {
-    error.value = err.response?.data?.message || err.message || 'An error occurred while loading the movie'
+    error.value =
+      err.response?.data?.message || err.message || 'An error occurred while loading the movie';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const fetchReviews = async () => {
   try {
     if (!movieId.value) {
-      return
+      return;
     }
-    
+
     const page = reviewsPage.value
     const response = await api.get(`/movies/${movieId.value}/reviews?page=${page}&limit=5`)
-    
+
     // Backend returns { reviews, pagination }
     reviews.value = response.data.reviews || []
     totalReviews.value = response.data.pagination?.totalReviews || 0
     reviewsPages.value = response.data.pagination?.totalPages || 1
   } catch (err) {
+    // Silently fail on review fetch errors
   }
-}
+    // Silently fail on review fetch errors
+  }
 
 const handleImageError = () => {
-  posterLoaded.value = false
+  posterLoaded.value = false;
   if (movie.value) {
-    movie.value.posterUrl = null
+    movie.value.posterUrl = null;
   }
-}
+};
 
 const handleWatchNow = () => {
-  alert('Watch functionality coming soon!')
-}
+  alert('Watch functionality coming soon!');
+};
 
 const getYoutubeEmbedUrl = (url) => {
-  if (!url) return ''
-  
+  if (!url) return '';
+
   // Handle youtube.com/watch?v=VIDEO_ID
   if (url.includes('youtube.com/watch')) {
-    const videoId = new URL(url).searchParams.get('v')
-    return `https://www.youtube.com/embed/${videoId}`
+    const videoId = new URL(url).searchParams.get('v');
+    return `https://www.youtube.com/embed/${videoId}`;
   }
-  
+
   // Handle youtu.be/VIDEO_ID
   if (url.includes('youtu.be/')) {
-    const videoId = url.split('youtu.be/')[1].split('?')[0]
-    return `https://www.youtube.com/embed/${videoId}`
+    const videoId = url.split('youtu.be/')[1].split('?')[0];
+    return `https://www.youtube.com/embed/${videoId}`;
   }
-  
+
   // If already an embed URL, return as-is
   if (url.includes('youtube.com/embed')) {
-    return url
+    return url;
   }
-  
+
   // Otherwise assume it's a direct video ID
-  return `https://www.youtube.com/embed/${url}`
-}
+  return `https://www.youtube.com/embed/${url}`;
+};
 
 const handleAddReview = async (reviewData) => {
   try {
-    const method = reviewData.reviewId ? 'put' : 'post'
+    const method = reviewData.reviewId ? 'put' : 'post';
     const url = reviewData.reviewId
       ? `/reviews/${reviewData.reviewId}`
-      : `/movies/${movieId.value}/reviews`
+      : `/movies/${movieId.value}/reviews`;
 
     if (method === 'put') {
       await api.put(url, {
         rating: reviewData.rating,
         content: reviewData.content
-      })
+      });
     } else {
       await api.post(url, {
         movieId: reviewData.movieId,
         rating: reviewData.rating,
         content: reviewData.content
-      })
+      });
     }
 
-    reviewError.value = null
+    reviewError.value = null;
     // Fetch both reviews and updated movie details to refresh rating
-    await Promise.all([fetchReviews(), fetchMovieDetails()])
+    await Promise.all([fetchReviews(), fetchMovieDetails()]);
   } catch (err) {
-    reviewError.value = err.response?.data?.message || err.message || 'Failed to save review'
+    reviewError.value = err.response?.data?.message || err.message || 'Failed to save review';
   }
-}
+};
 
-const handleEditReview = (review) => {
-}
+const handleEditReview = (review) => {};
 
 const handleDeleteReview = async (reviewId) => {
   try {
@@ -332,56 +431,57 @@ const handleDeleteReview = async (reviewId) => {
     // Fetch both reviews and updated movie details to refresh rating
     await Promise.all([fetchReviews(), fetchMovieDetails()])
   } catch (err) {
+    // Silently fail on delete errors
   }
 }
 
 const handleReviewsPageChange = (page) => {
-  reviewsPage.value = page
-  fetchReviews()
-}
+  reviewsPage.value = page;
+  fetchReviews();
+};
 
 const clearReviewError = () => {
-  reviewError.value = null
-}
+  reviewError.value = null;
+};
 
 const goBack = () => {
-  router.back()
-}
+  router.back();
+};
 
 // Load movie details when component mounts or movieId changes
 onMounted(async () => {
   // Ensure page starts at top when opened
   if (typeof window !== 'undefined' && window.scrollTo) {
-    window.scrollTo({ top: 0, behavior: 'auto' })
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
-  const id = movieId.value
+  const id = movieId.value;
   if (id && id !== 'undefined') {
-    await fetchMovieDetails()
-    await fetchReviews()
+    await fetchMovieDetails();
+    await fetchReviews();
   }
-})
+});
 
 watch(movieId, async (newId) => {
   if (typeof window !== 'undefined' && window.scrollTo) {
-    window.scrollTo({ top: 0, behavior: 'auto' })
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   if (newId && newId !== 'undefined') {
-    reviewsPage.value = 1
-    await fetchMovieDetails()
-    await fetchReviews()
+    reviewsPage.value = 1;
+    await fetchMovieDetails();
+    await fetchReviews();
   }
-})
+});
 
 // Movie edit/delete handlers
 const openEditModal = () => {
-  showEditModal.value = true
-}
+  showEditModal.value = true;
+};
 
 const closeEditModal = () => {
-  showEditModal.value = false
-}
+  showEditModal.value = false;
+};
 
 const handleMovieUpdate = async (movieData) => {
   try {
@@ -391,29 +491,29 @@ const handleMovieUpdate = async (movieData) => {
       releaseDate: movieData.releaseDate,
       posterUrl: movieData.posterUrl,
       trailerUrl: movieData.trailerUrl
-    })
-    
-    showEditModal.value = false
+    });
+
+    showEditModal.value = false;
     // Reload the movie details
-    await fetchMovieDetails()
+    await fetchMovieDetails();
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to update movie'
+    error.value = err.response?.data?.message || 'Failed to update movie';
   }
-}
+};
 
 const deleteMovie = async () => {
   if (!confirm('Are you sure you want to delete this movie? This action cannot be undone.')) {
-    return
+    return;
   }
-  
+
   try {
-    await api.delete(`/movies/${movieId.value}`)
+    await api.delete(`/movies/${movieId.value}`);
     // Redirect to home page after successful deletion
-    router.push('/')
+    router.push('/');
   } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to delete movie'
+    error.value = err.response?.data?.message || 'Failed to delete movie';
   }
-}
+};
 </script>
 
 <style scoped>

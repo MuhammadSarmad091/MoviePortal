@@ -7,17 +7,26 @@
         placeholder="Search movies by title..."
         class="search-input"
         @keyup.enter="handleSearch"
-      />
+      >
       <button
         v-if="searchInput"
         class="clear-button"
         @click="handleClear"
         title="Clear search"
       >
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        <i
+          class="fa-solid fa-xmark"
+          aria-hidden="true"
+        />
       </button>
-      <button class="search-button" @click="handleSearch">
-        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <button
+        class="search-button"
+        @click="handleSearch"
+      >
+        <i
+          class="fa-solid fa-magnifying-glass"
+          aria-hidden="true"
+        />
         Search
       </button>
     </div>
@@ -25,21 +34,31 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-const emit = defineEmits(['search', 'clear'])
-const searchInput = ref('')
+const emit = defineEmits(['search', 'clear']);
+const searchInput = ref('');
+let debounceTimer = null;
+
+// Debounce function to prevent excessive API calls
+const debounceSearch = (callback, delay = 500) => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(callback, delay);
+};
 
 const handleSearch = () => {
   if (searchInput.value.trim()) {
-    emit('search', searchInput.value.trim())
+    debounceSearch(() => {
+      emit('search', searchInput.value.trim());
+    });
   }
-}
+};
 
 const handleClear = () => {
-  searchInput.value = ''
-  emit('clear')
-}
+  searchInput.value = '';
+  clearTimeout(debounceTimer);
+  emit('clear');
+};
 </script>
 
 <style scoped>

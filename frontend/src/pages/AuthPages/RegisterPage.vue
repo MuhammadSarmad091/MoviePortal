@@ -1,11 +1,17 @@
 <template>
   <div class="register-page">
     <h2>Create Your Account</h2>
-    
-    <form @submit.prevent="handleRegister" class="register-form">
+
+    <form
+      @submit.prevent="handleRegister"
+      class="register-form"
+    >
       <!-- Username Field -->
       <div class="form-group">
-        <label for="username" class="form-label">Username</label>
+        <label
+          for="username"
+          class="form-label"
+        >Username</label>
         <input
           id="username"
           v-model="form.username"
@@ -15,13 +21,21 @@
           class="form-input"
           :class="{ 'input-error': errors.username }"
           required
-        />
-        <p v-if="errors.username" class="error-message">{{ errors.username }}</p>
+        >
+        <p
+          v-if="errors.username"
+          class="error-message"
+        >
+          {{ errors.username }}
+        </p>
       </div>
 
       <!-- Email Field -->
       <div class="form-group">
-        <label for="email" class="form-label">Email Address</label>
+        <label
+          for="email"
+          class="form-label"
+        >Email Address</label>
         <input
           id="email"
           v-model="form.email"
@@ -31,13 +45,21 @@
           class="form-input"
           :class="{ 'input-error': errors.email }"
           required
-        />
-        <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
+        >
+        <p
+          v-if="errors.email"
+          class="error-message"
+        >
+          {{ errors.email }}
+        </p>
       </div>
 
       <!-- Password Field -->
       <div class="form-group">
-        <label for="password" class="form-label">Password</label>
+        <label
+          for="password"
+          class="form-label"
+        >Password</label>
         <input
           id="password"
           v-model="form.password"
@@ -46,16 +68,27 @@
           class="form-input"
           :class="{ 'input-error': errors.password }"
           required
-        />
-        <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
-        <p v-if="!errors.password" class="password-hint">
+        >
+        <p
+          v-if="errors.password"
+          class="error-message"
+        >
+          {{ errors.password }}
+        </p>
+        <p
+          v-if="!errors.password"
+          class="password-hint"
+        >
           ✓ Use a strong password with uppercase, lowercase, numbers
         </p>
       </div>
 
       <!-- Confirm Password Field -->
       <div class="form-group">
-        <label for="confirmPassword" class="form-label">Confirm Password</label>
+        <label
+          for="confirmPassword"
+          class="form-label"
+        >Confirm Password</label>
         <input
           id="confirmPassword"
           v-model="form.confirmPassword"
@@ -64,12 +97,20 @@
           class="form-input"
           :class="{ 'input-error': errors.confirmPassword }"
           required
-        />
-        <p v-if="errors.confirmPassword" class="error-message">{{ errors.confirmPassword }}</p>
+        >
+        <p
+          v-if="errors.confirmPassword"
+          class="error-message"
+        >
+          {{ errors.confirmPassword }}
+        </p>
       </div>
 
       <!-- General Error -->
-      <div v-if="authError" class="error-box">
+      <div
+        v-if="authError"
+        class="error-box"
+      >
         {{ authError }}
       </div>
 
@@ -80,126 +121,117 @@
         :disabled="isLoading"
       >
         <span v-if="!isLoading">Create Account</span>
-        <span v-else class="button-loading">Creating...</span>
+        <span
+          v-else
+          class="button-loading"
+        >Creating...</span>
       </button>
-
-      <!-- Terms -->
-      <p class="terms-text">
-        By creating an account, you agree to our
-        <a href="#" class="terms-link">Terms of Service</a>
-        and
-        <a href="#" class="terms-link">Privacy Policy</a>
-      </p>
 
       <!-- Login Link -->
       <p class="login-section">
-        Already have an account? 
-        <RouterLink to="/auth/login" class="login-link">Sign in here</RouterLink>
+        Already have an account?
+        <RouterLink
+          to="/auth/login"
+          class="login-link"
+        >
+          Sign in here
+        </RouterLink>
       </p>
     </form>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuth } from '../../composables/useAuth'
-import { sanitizeUsername, sanitizeEmail } from '../../composables/useInputSanitize'
+import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuth } from '../../composables/useAuth';
+import { sanitizeUsername, sanitizeEmail } from '../../composables/useInputSanitize';
+import { validateLoginForm } from '../../utils/validation';
 
-const router = useRouter()
-const { register, loading: isLoading, error: authError } = useAuth()
+const router = useRouter();
+const { register, loading: isLoading, error: authError } = useAuth();
 
 const form = reactive({
   username: '',
   email: '',
   password: '',
   confirmPassword: ''
-})
+});
 
 const errors = reactive({
   username: '',
   email: '',
   password: '',
   confirmPassword: ''
-})
+});
 
 const validateForm = () => {
-  let isValid = true
+  let isValid = true;
 
   // Reset errors
-  errors.username = ''
-  errors.email = ''
-  errors.password = ''
-  errors.confirmPassword = ''
+  errors.username = '';
+  errors.email = '';
+  errors.password = '';
+  errors.confirmPassword = '';
 
   // Username validation
   if (!form.username.trim()) {
-    errors.username = 'Username is required'
-    isValid = false
+    errors.username = 'Username is required';
+    isValid = false;
   } else if (form.username.length < 3) {
-    errors.username = 'Username must be at least 3 characters'
-    isValid = false
+    errors.username = 'Username must be at least 3 characters';
+    isValid = false;
   } else if (form.username.length > 20) {
-    errors.username = 'Username must not exceed 20 characters'
-    isValid = false
+    errors.username = 'Username must not exceed 20 characters';
+    isValid = false;
   }
 
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!form.email.trim()) {
-    errors.email = 'Email is required'
-    isValid = false
-  } else if (!emailRegex.test(form.email)) {
-    errors.email = 'Please enter a valid email address'
-    isValid = false
-  }
+  // Email and password validation using utility
+  const { isValid: formValid, errors: validationErrors } = validateLoginForm({
+    email: form.email,
+    password: form.password
+  });
 
-  // Password validation
-  if (!form.password) {
-    errors.password = 'Password is required'
-    isValid = false
-  } else if (form.password.length < 6) {
-    errors.password = 'Password must be at least 6 characters'
-    isValid = false
-  } else if (form.password.length > 100) {
-    errors.password = 'Password is too long'
-    isValid = false
+  if (!formValid) {
+    errors.email = validationErrors.email || '';
+    errors.password = validationErrors.password || '';
+    isValid = false;
   }
 
   // Confirm password validation
   if (!form.confirmPassword) {
-    errors.confirmPassword = 'Please confirm your password'
-    isValid = false
+    errors.confirmPassword = 'Please confirm your password';
+    isValid = false;
   } else if (form.password !== form.confirmPassword) {
-    errors.confirmPassword = 'Passwords do not match'
-    isValid = false
+    errors.confirmPassword = 'Passwords do not match';
+    isValid = false;
   }
 
-  return isValid
-}
+  return isValid;
+};
 
 const handleRegister = async () => {
   if (!validateForm()) {
-    return
+    return;
   }
 
   try {
-    await register(form.username, form.email, form.password)
+    await register(form.username, form.email, form.password);
     // Redirect to home page after successful registration
-    await router.push('/')
+    await router.push('/');
   } catch (err) {
-    console.error('Registration error:', err)
+    console.error('Registration error:', err);
   }
-}
+};
 
 // sanitize as user types
 const onUsernameInput = (e) => {
-  form.username = sanitizeUsername(e.target.value)
-}
+  form.username = sanitizeUsername(e.target.value);
+};
 
 const onEmailInput = (e) => {
-  form.email = sanitizeEmail(e.target.value)
-}
+  form.email = sanitizeEmail(e.target.value);
+};
 </script>
 
 <style scoped>
@@ -241,7 +273,9 @@ const onEmailInput = (e) => {
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .form-input::placeholder {
@@ -319,25 +353,6 @@ const onEmailInput = (e) => {
   to {
     transform: rotate(360deg);
   }
-}
-
-.terms-text {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-  text-align: center;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.terms-link {
-  color: var(--accent-gold);
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-
-.terms-link:hover {
-  opacity: 0.8;
-  text-decoration: underline;
 }
 
 .login-section {

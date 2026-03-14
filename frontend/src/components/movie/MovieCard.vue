@@ -1,19 +1,28 @@
 <template>
-  <router-link :to="`/movie/${movie.id}`" class="movie-card">
+  <router-link
+    :to="`/movie/${movie.id}`"
+    class="movie-card"
+  >
     <div class="card-image-wrapper">
-      <img 
-        v-if="movie.posterUrl" 
-        :src="movie.posterUrl" 
+      <img
+        v-if="movie.posterUrl"
+        :src="movie.posterUrl"
         :alt="movie.title"
         class="card-image"
         loading="lazy"
         @error="handleImageError"
         @load="handleImageLoad"
-      />
-      <div v-else class="card-image-placeholder">
-        <i class="placeholder-icon fa-solid fa-film" aria-hidden="true"></i>
+      >
+      <div
+        v-else
+        class="card-image-placeholder"
+      >
+        <i
+          class="placeholder-icon fa-solid fa-film"
+          aria-hidden="true"
+        />
       </div>
-      
+
       <div class="card-overlay">
         <div class="card-hover-info">
           <span class="view-details">View Details</span>
@@ -21,27 +30,47 @@
       </div>
 
       <!-- Rank Badge - Enhanced -->
-      <div v-if="rank !== null" class="rank-badge">
+      <div
+        v-if="rank !== null"
+        class="rank-badge"
+      >
         <span class="rank-number">#{{ rank }}</span>
-          <span v-if="rank === 1" class="rank-icon"><i class="fa-solid fa-crown" aria-hidden="true"></i></span>
+        <span
+          v-if="rank === 1"
+          class="rank-icon"
+        ><i
+          class="fa-solid fa-crown"
+          aria-hidden="true"
+        /></span>
       </div>
 
       <!-- Review Count Badge -->
       <div class="review-badge">
         <span class="review-count">{{ reviewCount }}</span>
-          <span class="review-icon"><i class="fa-solid fa-comments" aria-hidden="true"></i></span>
+        <span class="review-icon"><i
+          class="fa-solid fa-comments"
+          aria-hidden="true"
+        /></span>
       </div>
 
       <!-- Image Rating Badge (bottom-left) -->
-      <div class="image-rating" v-if="averageRating">
-        <i class="fa-solid fa-star" aria-hidden="true"></i>
+      <div
+        class="image-rating"
+        v-if="averageRating"
+      >
+        <i
+          class="fa-solid fa-star"
+          aria-hidden="true"
+        />
         <span class="rating-value">{{ averageRating }}</span>
       </div>
     </div>
 
     <div class="card-content">
-      <h3 class="card-title">{{ movie.title }}</h3>
-      
+      <h3 class="card-title">
+        {{ movie.title }}
+      </h3>
+
       <div class="card-meta">
         <span class="release-date">{{ releaseYear }}</span>
       </div>
@@ -52,7 +81,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref } from 'vue';
 
 const props = defineProps({
   movie: {
@@ -64,33 +93,33 @@ const props = defineProps({
     type: Number,
     default: null
   }
-})
+});
 
-const imageLoaded = ref(false)
-const imageFailed = ref(false)
+const imageLoaded = ref(false);
+const imageFailed = ref(false);
 
 const releaseYear = computed(() => {
-  if (!props.movie.releaseDate) return 'N/A'
-  return new Date(props.movie.releaseDate).getFullYear()
-})
+  if (!props.movie.releaseDate) return 'N/A';
+  return new Date(props.movie.releaseDate).getFullYear();
+});
 
 const averageRating = computed(() => {
   // Backend returns ratings as a single number (average rating)
-  return props.movie.ratings ? Number(props.movie.ratings).toFixed(1) : '0'
-})
+  return props.movie.ratings ? Number(props.movie.ratings).toFixed(1) : '0';
+});
 
 const reviewCount = computed(() => {
   // This comes from the backend review count
-  return props.movie.reviewCount || 0
-})
+  return props.movie.reviewCount || 0;
+});
 
 const handleImageLoad = () => {
-  imageLoaded.value = true
-}
+  imageLoaded.value = true;
+};
 
 const handleImageError = () => {
-  imageFailed.value = true
-}
+  imageFailed.value = true;
+};
 </script>
 
 <style scoped>

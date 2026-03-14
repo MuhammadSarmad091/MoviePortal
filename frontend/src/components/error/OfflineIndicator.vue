@@ -1,8 +1,16 @@
 <template>
   <transition name="slide-down">
-    <div v-if="!isOnline" class="offline-indicator" role="alert" aria-live="polite">
+    <div
+      v-if="!isOnline"
+      class="offline-indicator"
+      role="alert"
+      aria-live="polite"
+    >
       <div class="offline-content">
-        <i class="fa-solid fa-wifi-slash" aria-hidden="true"></i>
+        <i
+          class="fa-solid fa-wifi-slash"
+          aria-hidden="true"
+        />
         <span>You are offline. Some features may be unavailable.</span>
       </div>
     </div>
@@ -10,27 +18,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue';
 
-const isOnline = ref(navigator.onLine)
+const isOnline = ref(navigator.onLine);
 
 const handleOnline = () => {
-  isOnline.value = true
-}
+  isOnline.value = true;
+};
 
 const handleOffline = () => {
-  isOnline.value = false
-}
+  isOnline.value = false;
+};
 
 onMounted(() => {
-  window.addEventListener('online', handleOnline)
-  window.addEventListener('offline', handleOffline)
-})
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('online', handleOnline)
-  window.removeEventListener('offline', handleOffline)
-})
+  window.removeEventListener('online', handleOnline);
+  window.removeEventListener('offline', handleOffline);
+});
 </script>
 
 <style scoped>

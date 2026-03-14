@@ -1,37 +1,59 @@
 <template>
   <div class="login-page">
     <h2>Welcome Back</h2>
-    
-    <form @submit.prevent="handleLogin" class="login-form">
+
+    <form
+      @submit.prevent="handleLogin"
+      class="login-form"
+    >
       <!-- Email Field -->
       <div class="form-group">
-        <label for="email" class="form-label">Email Address</label>
+        <label
+          for="email"
+          class="form-label"
+        >Email Address</label>
         <input
           id="email"
           v-model="form.email"
           @input="onEmailInput"
-          type="email"
+          @blur="validateEmail"
+          type="text"
           placeholder="you@example.com"
           class="form-input"
           :class="{ 'input-error': errors.email }"
           required
-        />
-        <p v-if="errors.email" class="error-message">{{ errors.email }}</p>
+        >
+        <p
+          v-if="errors.email"
+          class="error-message"
+        >
+          {{ errors.email }}
+        </p>
       </div>
 
       <!-- Password Field -->
       <div class="form-group">
-        <label for="password" class="form-label">Password</label>
+        <label
+          for="password"
+          class="form-label"
+        >Password</label>
         <input
           id="password"
           v-model="form.password"
+          @input="onPasswordInput"
+          @blur="validatePassword"
           type="password"
           placeholder="Enter your password"
           class="form-input"
           :class="{ 'input-error': errors.password }"
           required
-        />
-        <p v-if="errors.password" class="error-message">{{ errors.password }}</p>
+        >
+        <p
+          v-if="errors.password"
+          class="error-message"
+        >
+          {{ errors.password }}
+        </p>
       </div>
 
       <!-- Remember Me Checkbox -->
@@ -41,12 +63,18 @@
           v-model="form.rememberMe"
           type="checkbox"
           class="form-checkbox"
-        />
-        <label for="rememberMe" class="checkbox-label">Remember me for 30 days</label>
+        >
+        <label
+          for="rememberMe"
+          class="checkbox-label"
+        >Remember me for 30 days</label>
       </div>
 
       <!-- General Error -->
-      <div v-if="authError" class="error-box">
+      <div
+        v-if="authError"
+        class="error-box"
+      >
         {{ authError }}
       </div>
 
@@ -57,25 +85,30 @@
         :disabled="isLoading"
       >
         <span v-if="!isLoading">Sign In</span>
-        <span v-else class="button-loading">Signing in...</span>
+        <span
+          v-else
+          class="button-loading"
+        >Signing in...</span>
       </button>
-
-      <!-- Forgot Password -->
-      <p class="forgot-password">
-        <a href="#" class="forgot-link">Forgot your password?</a>
-      </p>
 
       <!-- Signup Link -->
       <p class="signup-section">
-        Don't have an account? 
-        <RouterLink to="/auth/register" class="signup-link">Sign up here</RouterLink>
+        Don't have an account?
+        <RouterLink
+          to="/auth/register"
+          class="signup-link"
+        >
+          Sign up here
+        </RouterLink>
       </p>
 
       <!-- Demo Credentials -->
       <div class="demo-info">
-        <p class="demo-title">Demo Credentials (Test Account):</p>
+        <p class="demo-title">
+          Demo Credentials (Test Account):
+        </p>
         <p class="demo-cred">
-          <strong>Email:</strong> abc@gmail.com<br />
+          <strong>Email:</strong> abc@gmail.com<br>
           <strong>Password:</strong> 12344321
         </p>
       </div>
@@ -84,74 +117,75 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuth } from '../../composables/useAuth'
-import { sanitizeEmail } from '../../composables/useInputSanitize'
+import { reactive, ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useAuth } from '../../composables/useAuth';
+import { sanitizeEmail } from '../../composables/useInputSanitize';
+import { validateLoginForm } from '../../utils/validation';
 
-const router = useRouter()
-const route = useRoute()
-const { login, loading: isLoading, error: authError } = useAuth()
+const router = useRouter();
+const route = useRoute();
+const { login, loading: isLoading, error: authError, clearError } = useAuth();
 
 const form = reactive({
   email: '',
   password: '',
   rememberMe: false
-})
+});
 
 const errors = reactive({
   email: '',
   password: ''
-})
+});
+
+const validateEmail = () => {
+  const { errors: validationErrors } = validateLoginForm(form);
+  errors.email = validationErrors.email || '';
+};
+
+const validatePassword = () => {
+  const { errors: validationErrors } = validateLoginForm(form);
+  errors.password = validationErrors.password || '';
+};
 
 const validateForm = () => {
-  let isValid = true
-
-  // Reset errors
-  errors.email = ''
-  errors.password = ''
-
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!form.email.trim()) {
-    errors.email = 'Email is required'
-    isValid = false
-  } else if (!emailRegex.test(form.email)) {
-    errors.email = 'Please enter a valid email address'
-    isValid = false
-  }
-
-  // Password validation
-  if (!form.password) {
-    errors.password = 'Password is required'
-    isValid = false
-  } else if (form.password.length < 6) {
-    errors.password = 'Password must be at least 6 characters'
-    isValid = false
-  }
-
-  return isValid
-}
+  const { isValid, errors: validationErrors } = validateLoginForm(form);
+  errors.email = validationErrors.email || '';
+  errors.password = validationErrors.password || '';
+  return isValid;
+};
 
 const handleLogin = async () => {
   if (!validateForm()) {
-    return
+    return;
   }
 
   try {
-    await login(form.email, form.password)
-    // Redirect to home page or intended page
-    const redirectTo = route.query.redirect || '/'
-    await router.push(redirectTo)
+    await login(form.email, form.password);
+    // Only redirect on successful login
+    const redirectTo = route.query.redirect || '/';
+    await router.push(redirectTo);
   } catch (err) {
-    console.error('Login error:', err)
+    // Error is already set in authError via authStore
+    // No need to console.error, error is reactive and will display
   }
-}
+};
 
 // input handlers to sanitize while typing
 const onEmailInput = (e) => {
-  form.email = sanitizeEmail(e.target.value)
-}
+  form.email = sanitizeEmail(e.target.value);
+  // Clear auth error when user starts typing
+  if (authError.value) {
+    clearError();
+  }
+};
+
+const onPasswordInput = () => {
+  // Clear auth error when user starts typing password
+  if (authError.value) {
+    clearError();
+  }
+};
 </script>
 
 <style scoped>
@@ -193,7 +227,9 @@ const onEmailInput = (e) => {
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .form-input::placeholder {
@@ -283,23 +319,6 @@ const onEmailInput = (e) => {
   to {
     transform: rotate(360deg);
   }
-}
-
-.forgot-password {
-  text-align: center;
-  margin: 0;
-}
-
-.forgot-link {
-  color: var(--accent-gold);
-  font-size: var(--font-size-sm);
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
-}
-
-.forgot-link:hover {
-  opacity: 0.8;
-  text-decoration: underline;
 }
 
 .signup-section {

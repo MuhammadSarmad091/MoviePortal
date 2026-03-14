@@ -19,17 +19,20 @@
         title="Close modal"
         aria-label="Close modal"
       >
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        <i
+          class="fa-solid fa-xmark"
+          aria-hidden="true"
+        />
       </button>
-      <slot></slot>
+      <slot />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close']);
 defineProps({
   titleId: {
     type: String,
@@ -39,105 +42,105 @@ defineProps({
     type: String,
     default: 'modal-description'
   }
-})
+});
 
-const modalContent = ref(null)
+const modalContent = ref(null);
 
 const closeModal = () => {
-  emit('close')
-}
+  emit('close');
+};
 
 const handleKeyDown = (e) => {
   if (e.key === 'Escape') {
-    closeModal()
+    closeModal();
   }
-}
+};
 
 const trapFocus = (e) => {
-  if (!modalContent.value) return
+  if (!modalContent.value) return;
 
   const focusableElements = modalContent.value.querySelectorAll(
     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-  )
+  );
 
-  if (focusableElements.length === 0) return
+  if (focusableElements.length === 0) return;
 
-  const firstElement = focusableElements[0]
-  const lastElement = focusableElements[focusableElements.length - 1]
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
 
   if (e.shiftKey) {
     // Shift + Tab
     if (document.activeElement === firstElement) {
-      e.preventDefault()
-      lastElement.focus()
+      e.preventDefault();
+      lastElement.focus();
     }
   } else {
     // Tab
     if (document.activeElement === lastElement) {
-      e.preventDefault()
-      firstElement.focus()
+      e.preventDefault();
+      firstElement.focus();
     }
   }
-}
+};
 
 onMounted(async () => {
   // Add keyboard event listeners immediately
-  document.addEventListener('keydown', handleKeyDown)
-  
+  document.addEventListener('keydown', handleKeyDown);
+
   // Prevent body scroll
-  document.body.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden';
 
   // Function to try focusing the title input field
   const focusTitleInput = () => {
-    if (!modalContent.value) return false
+    if (!modalContent.value) return false;
 
     // First, try to find the title input by id
-    const titleInput = modalContent.value.querySelector('#title')
+    const titleInput = modalContent.value.querySelector('#title');
     if (titleInput) {
-      titleInput.focus()
-      return true
+      titleInput.focus();
+      return true;
     }
 
     // Fallback: find the first input field (excluding the close button area)
-    const inputs = modalContent.value.querySelectorAll('input, textarea')
+    const inputs = modalContent.value.querySelectorAll('input, textarea');
     if (inputs.length > 0) {
-      inputs[0].focus()
-      return true
+      inputs[0].focus();
+      return true;
     }
 
-    return false
-  }
+    return false;
+  };
 
   // Try multiple times with increasing delays to ensure slot content is rendered
-  await nextTick()
-  let focused = focusTitleInput()
-  
+  await nextTick();
+  let focused = focusTitleInput();
+
   if (!focused) {
-    await new Promise(resolve => setTimeout(resolve, 100))
-    focused = focusTitleInput()
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    focused = focusTitleInput();
   }
 
   if (!focused) {
-    await new Promise(resolve => setTimeout(resolve, 200))
-    focusTitleInput()
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    focusTitleInput();
   }
 
   // Add focus trap for Tab key
   if (modalContent.value) {
-    modalContent.value.addEventListener('keydown', trapFocus)
+    modalContent.value.addEventListener('keydown', trapFocus);
   }
-})
+});
 
 onUnmounted(() => {
   // Remove event listeners
-  document.removeEventListener('keydown', handleKeyDown)
+  document.removeEventListener('keydown', handleKeyDown);
   if (modalContent.value) {
-    modalContent.value.removeEventListener('keydown', trapFocus)
+    modalContent.value.removeEventListener('keydown', trapFocus);
   }
 
   // Restore body scroll
-  document.body.style.overflow = ''
-})
+  document.body.style.overflow = '';
+});
 </script>
 
 <style scoped>

@@ -7,7 +7,10 @@
         class="add-review-button btn-primary"
         @click="toggleForm"
       >
-        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        <i
+          class="fa-solid fa-plus"
+          aria-hidden="true"
+        />
         Write Review
       </button>
     </div>
@@ -22,14 +25,31 @@
     />
 
     <!-- Error Message -->
-    <div v-if="props.reviewError || formError" class="error-alert">
-      <span class="error-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+    <div
+      v-if="props.reviewError || formError"
+      class="error-alert"
+    >
+      <span class="error-icon"><i
+        class="fa-solid fa-triangle-exclamation"
+        aria-hidden="true"
+      /></span>
       <span>{{ props.reviewError || formError }}</span>
-      <button class="close-error" @click="handleClearError"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      <button
+        class="close-error"
+        @click="handleClearError"
+      >
+        <i
+          class="fa-solid fa-xmark"
+          aria-hidden="true"
+        />
+      </button>
     </div>
 
     <!-- Reviews List -->
-    <div v-if="reviews.length > 0" class="reviews-list">
+    <div
+      v-if="reviews.length > 0"
+      class="reviews-list"
+    >
       <review-card
         v-for="review in reviews"
         :key="review.id"
@@ -41,8 +61,14 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="empty-state">
-      <i class="empty-icon fa-solid fa-comment-dots" aria-hidden="true"></i>
+    <div
+      v-else
+      class="empty-state"
+    >
+      <i
+        class="empty-icon fa-solid fa-comment-dots"
+        aria-hidden="true"
+      />
       <p>No reviews yet. Be the first to review!</p>
     </div>
 
@@ -57,11 +83,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useAuth } from '../../composables/useAuth'
-import ReviewCard from './ReviewCard.vue'
-import ReviewForm from './ReviewForm.vue'
-import Pagination from '../pagination/Pagination.vue'
+import { ref, computed } from 'vue';
+import { useAuth } from '../../composables/useAuth';
+import ReviewCard from './ReviewCard.vue';
+import ReviewForm from './ReviewForm.vue';
+import Pagination from '../pagination/Pagination.vue';
 
 const props = defineProps({
   movieId: {
@@ -89,77 +115,83 @@ const props = defineProps({
     type: String,
     default: null
   }
-})
+});
 
-const emit = defineEmits(['add-review', 'edit-review', 'delete-review', 'page-change', 'clear-review-error'])
+const emit = defineEmits([
+  'add-review',
+  'edit-review',
+  'delete-review',
+  'page-change',
+  'clear-review-error'
+]);
 
-const { currentUser, isAuthenticated } = useAuth()
+const { currentUser, isAuthenticated } = useAuth();
 
-const showForm = ref(false)
-const editingReview = ref(null)
-const isSubmitting = ref(false)
-const formError = ref(null)
+const showForm = ref(false);
+const editingReview = ref(null);
+const isSubmitting = ref(false);
+const formError = ref(null);
 
 const toggleForm = () => {
-  showForm.value = !showForm.value
-  formError.value = null
+  showForm.value = !showForm.value;
+  formError.value = null;
   if (!showForm.value) {
-    editingReview.value = null
+    editingReview.value = null;
   }
-}
+};
 
 const isReviewAuthor = (review) => {
-  if (!currentUser.value || !review.userId) return false
-  
+  if (!currentUser.value || !review.userId) return false;
+
   // Handle userId as string (populated ID)
   if (typeof review.userId === 'string') {
-    return currentUser.value.id === review.userId || currentUser.value._id === review.userId
+    return currentUser.value.id === review.userId || currentUser.value._id === review.userId;
   }
-  
+
   // Handle userId as object with id or _id fields
-  const reviewUserId = review.userId.id || review.userId._id
-  return currentUser.value.id === reviewUserId || currentUser.value._id === reviewUserId
-}
+  const reviewUserId = review.userId.id || review.userId._id;
+  return currentUser.value.id === reviewUserId || currentUser.value._id === reviewUserId;
+};
 
 const handleSubmitReview = async (reviewData) => {
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
     await emit('add-review', {
       ...reviewData,
       movieId: props.movieId,
       reviewId: editingReview.value?.id
-    })
-    showForm.value = false
-    editingReview.value = null
+    });
+    showForm.value = false;
+    editingReview.value = null;
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
-}
+};
 
 const handleCancelForm = () => {
-  showForm.value = false
-  editingReview.value = null
-}
+  showForm.value = false;
+  editingReview.value = null;
+};
 
 const handleEditReview = (review) => {
-  editingReview.value = review
-  showForm.value = true
-}
+  editingReview.value = review;
+  showForm.value = true;
+};
 
 const handleDeleteReview = (reviewId) => {
   if (confirm('Are you sure you want to delete this review?')) {
-    emit('delete-review', reviewId)
+    emit('delete-review', reviewId);
   }
-}
+};
 
 const handleClearError = () => {
-  formError.value = null
-  emit('clear-review-error')
-}
+  formError.value = null;
+  emit('clear-review-error');
+};
 
 const goToPage = (page) => {
-  emit('page-change', page)
-}
+  emit('page-change', page);
+};
 </script>
 
 <style scoped>

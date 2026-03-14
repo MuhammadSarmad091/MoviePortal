@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuth } from '../composables/useAuth'
+import { createRouter, createWebHistory } from 'vue-router';
+import { useAuth } from '../composables/useAuth';
 
 const routes = [
   {
@@ -40,24 +40,24 @@ const routes = [
     path: '/:pathMatch(.*)*',
     redirect: '/'
   }
-]
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
+});
 
 // Route guard for protected routes
 router.beforeEach((to, from, next) => {
-  const { isAuthenticated } = useAuth()
-  
-  const protectedRoutes = ['AddMovie', 'EditMovie']
-  
-  if (protectedRoutes.includes(to.name) && !isAuthenticated()) {
-    next({ name: 'Login', query: { redirect: to.path } })
-  } else {
-    next()
-  }
-})
+  const { isAuthenticated } = useAuth();
 
-export default router
+  const protectedRoutes = ['AddMovie', 'EditMovie'];
+
+  if (protectedRoutes.includes(to.name) && !isAuthenticated()) {
+    next({ name: 'Login', query: { redirect: to.path } });
+  } else {
+    next();
+  }
+});
+
+export default router;

@@ -1,20 +1,20 @@
 <template>
   <error-boundary ref="errorBoundary">
     <offline-indicator />
-    <router-view></router-view>
+    <router-view />
   </error-boundary>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import ErrorBoundary from './components/error/ErrorBoundary.vue'
-import OfflineIndicator from './components/error/OfflineIndicator.vue'
+import { ref } from 'vue';
+import ErrorBoundary from './components/error/ErrorBoundary.vue';
+import OfflineIndicator from './components/error/OfflineIndicator.vue';
 
-const errorBoundary = ref(null)
+const errorBoundary = ref(null);
 
 // Expose error boundary for global use
 if (typeof window !== 'undefined') {
-  window.__errorBoundary = errorBoundary
+  window.__errorBoundary = errorBoundary;
 }
 </script>
 
@@ -25,7 +25,8 @@ if (typeof window !== 'undefined') {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   font-family: 'Arial', sans-serif;
   background-color: #f5f5f5;
   color: #333;

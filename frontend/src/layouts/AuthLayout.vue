@@ -2,15 +2,27 @@
   <div class="auth-layout">
     <div class="auth-container">
       <aside class="auth-visual">
-        <div class="visual-overlay"></div>
+        <div class="visual-overlay" />
         <div class="visual-content">
           <div class="visual-card">
             <div class="visual-card-body">
-              <h1 class="visual-title"><i class="fa-solid fa-film" aria-hidden="true"></i> MoviesPortal</h1>
-              <p class="visual-sub">Discover, rate and review films — join our community.</p>
+              <h1 class="visual-title">
+                <i
+                  class="fa-solid fa-film"
+                  aria-hidden="true"
+                /> MoviesPortal
+              </h1>
+              <p class="visual-sub">
+                Discover, rate and review films — join our community.
+              </p>
             </div>
             <div class="visual-card-actions">
-              <router-link to="/" class="visual-cta">Explore movies</router-link>
+              <router-link
+                to="/"
+                class="visual-cta"
+              >
+                Explore movies
+              </router-link>
             </div>
           </div>
         </div>
@@ -18,18 +30,24 @@
 
       <div class="auth-card">
         <div class="auth-header">
-          <h1 class="logo"><i class="fa-solid fa-user" aria-hidden="true"></i> Welcome</h1>
-          <p class="tagline">Sign in or create an account to get started</p>
+          <h1 class="logo">
+            <i
+              class="fa-solid fa-user"
+              aria-hidden="true"
+            /> Welcome
+          </h1>
+          <p class="tagline">
+            Sign in or create an account to get started
+          </p>
         </div>
 
-        <router-view></router-view>
+        <router-view />
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-</script>
+<script setup></script>
 
 <style scoped>
 .auth-layout {
@@ -63,7 +81,6 @@
   justify-content: center;
   color: #fff;
   /*padding: 2rem;*/
-
 }
 
 .visual-overlay {
@@ -90,7 +107,7 @@
 
 .visual-sub {
   margin: 0 0 1rem 0;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .visual-cta {
@@ -100,7 +117,7 @@
   padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
   text-decoration: none;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* New visual-card styling: full-width card inside image with dark background like signin card */
@@ -182,5 +199,4 @@
     margin: 0 auto;
   }
 }
-
 </style>

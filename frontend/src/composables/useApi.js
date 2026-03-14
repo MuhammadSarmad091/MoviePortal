@@ -1,8 +1,8 @@
-import axios from 'axios'
+import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
-let apiInstance = null
+let apiInstance = null;
 
 export function useApi() {
   if (!apiInstance) {
@@ -12,38 +12,44 @@ export function useApi() {
       headers: {
         'Content-Type': 'application/json'
       }
-    })
+    });
 
     // Request interceptor
     apiInstance.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('token')
+        const token = localStorage.getItem('token');
         if (token) {
-          config.headers.Authorization = `Bearer ${token}`
+          config.headers.Authorization = `Bearer ${token}`;
         }
-        return config
+        return config;
       },
       (error) => {
-        return Promise.reject(error)
+        return Promise.reject(error);
       }
-    )
+    );
 
     // Response interceptor
     apiInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        // Handle 401 Unauthorized - token expired or invalid
+        // Handle 401 Unauthorized - only redirect if user is already authenticated
+        // (meaning token expired), not for login/register failures
         if (error.response?.status === 401) {
-          localStorage.removeItem('token')
-          // Optional: Redirect to login (can be handled by router guard)
-          window.location.href = '/auth/login'
+          const token = localStorage.getItem('token');
+          if (token) {
+            // Token exists but is invalid/expired - clear and redirect
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/auth/login';
+          }
+          // If no token, let the error propagate (for login/register failures)
         }
-        return Promise.reject(error)
+        return Promise.reject(error);
       }
-    )
+    );
   }
 
   return {
     api: apiInstance
-  }
+  };
 }

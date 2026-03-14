@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from 'vue';
 
 const props = defineProps({
   movieId: {
@@ -21,16 +21,16 @@ const props = defineProps({
     type: Boolean,
     default: false
   }
-})
+});
 
-const emit = defineEmits(['toggle'])
+const emit = defineEmits(['toggle']);
 
-const isFavoriteLocal = ref(props.isFavorite)
+const isFavoriteLocal = ref(props.isFavorite);
 
 const toggleFavorite = () => {
-  isFavoriteLocal.value = !isFavoriteLocal.value
-  emit('toggle')
-}
+  isFavoriteLocal.value = !isFavoriteLocal.value;
+  emit('toggle');
+};
 </script>
 
 <style scoped>

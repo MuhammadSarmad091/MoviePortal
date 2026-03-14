@@ -3,31 +3,66 @@
     <!-- Header/Navbar -->
     <header class="app-header">
       <div class="header-container">
-        <router-link to="/" class="logo">
-          <i class="fa-solid fa-film" aria-hidden="true"></i>
+        <router-link
+          to="/"
+          class="logo"
+        >
+          <i
+            class="fa-solid fa-film"
+            aria-hidden="true"
+          />
           MoviesPortal
         </router-link>
 
         <nav class="nav-menu">
-          <router-link to="/" class="nav-link">Home</router-link>
-          <a href="#" class="nav-link" @click.prevent="goToExplore">Explore</a>
+          <router-link
+            to="/"
+            class="nav-link"
+          >
+            Home
+          </router-link>
+          <a
+            href="#"
+            class="nav-link"
+            @click.prevent="goToExplore"
+          >Explore</a>
         </nav>
 
         <div class="header-actions">
-          <button v-if="!isAuthenticated" @click="goToLogin" class="btn-secondary btn-login">
+          <button
+            v-if="!isAuthenticated"
+            @click="goToLogin"
+            class="btn-secondary btn-login"
+          >
             Login
           </button>
 
-          <div v-else class="user-menu" ref="menuRef">
-            <button class="user-button" @click="toggleMenu">
+          <div
+            v-else
+            class="user-menu"
+            ref="menuRef"
+          >
+            <button
+              class="user-button"
+              @click="toggleMenu"
+            >
               <span class="user-avatar">{{ userInitials }}</span>
               <span class="user-name">{{ userName }}</span>
-              <i class="fa-solid fa-caret-down user-caret" aria-hidden="true"></i>
+              <i
+                class="fa-solid fa-caret-down user-caret"
+                aria-hidden="true"
+              />
             </button>
 
-            <div v-if="showMenu" class="user-dropdown">
-              <button class="dropdown-item" @click="handleLogout">
-                <i class="fa-solid fa-right-from-bracket"></i>
+            <div
+              v-if="showMenu"
+              class="user-dropdown"
+            >
+              <button
+                class="dropdown-item"
+                @click="handleLogout"
+              >
+                <i class="fa-solid fa-right-from-bracket" />
                 Logout
               </button>
             </div>
@@ -38,39 +73,98 @@
 
     <!-- Main Content -->
     <main class="app-main">
-      <router-view></router-view>
+      <router-view />
     </main>
 
     <!-- Footer -->
     <footer class="app-footer">
       <div class="footer-inner">
         <div class="footer-col footer-about">
-          <router-link to="/" class="footer-logo">
-            <i class="fa-solid fa-film" aria-hidden="true"></i>
+          <router-link
+            to="/"
+            class="footer-logo"
+          >
+            <i
+              class="fa-solid fa-film"
+              aria-hidden="true"
+            />
             MoviesPortal
           </router-link>
-          <p class="footer-text">Discover, review and share your favorite movies. Curated recommendations and community reviews to help you find your next watch.</p>
+          <p class="footer-text">
+            Discover, review and share your favorite movies. Curated recommendations and community
+            reviews to help you find your next watch.
+          </p>
         </div>
 
         <div class="footer-col footer-links">
           <h4>Quick Links</h4>
           <ul>
-            <li><router-link to="/">Home</router-link></li>
-            <li><a href="#" class="nav-link" @click.prevent="goToExplore">Explore</a></li>
-            <li><router-link to="/auth/login">Login</router-link></li>
-            <li><router-link to="/auth/register">Sign Up</router-link></li>
+            <li>
+              <router-link to="/">
+                Home
+              </router-link>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="nav-link"
+                @click.prevent="goToExplore"
+              >Explore</a>
+            </li>
+            <li>
+              <router-link to="/auth/login">
+                Login
+              </router-link>
+            </li>
+            <li>
+              <router-link to="/auth/register">
+                Sign Up
+              </router-link>
+            </li>
           </ul>
         </div>
 
         <div class="footer-col footer-social">
           <h4>Follow Us</h4>
-          <p class="follow-text">Stay connected — follow MoviesPortal on social media</p>
+          <p class="follow-text">
+            Stay connected — follow MoviesPortal on social media
+          </p>
           <div class="social-icons">
-            <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter" class="social-link"><i class="fa-brands fa-twitter"></i></a>
-            <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook" class="social-link"><i class="fa-brands fa-facebook-f"></i></a>
-            <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram" class="social-link"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener" aria-label="LinkedIn" class="social-link"><i class="fa-brands fa-linkedin-in"></i></a>
-            <a href="https://youtube.com" target="_blank" rel="noopener" aria-label="YouTube" class="social-link"><i class="fa-brands fa-youtube"></i></a>
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener"
+              aria-label="Twitter"
+              class="social-link"
+            ><i class="fa-brands fa-twitter" /></a>
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener"
+              aria-label="Facebook"
+              class="social-link"
+            ><i class="fa-brands fa-facebook-f" /></a>
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener"
+              aria-label="Instagram"
+              class="social-link"
+            ><i class="fa-brands fa-instagram" /></a>
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener"
+              aria-label="LinkedIn"
+              class="social-link"
+            ><i class="fa-brands fa-linkedin-in" /></a>
+            <a
+              href="https://youtube.com"
+              target="_blank"
+              rel="noopener"
+              aria-label="YouTube"
+              class="social-link"
+            ><i class="fa-brands fa-youtube" /></a>
           </div>
         </div>
       </div>
@@ -87,69 +181,74 @@
 </template>
 
 <script setup>
-import { useAuth } from '../composables/useAuth'
-import { useRouter } from 'vue-router'
+import { useAuth } from '../composables/useAuth';
+import { useRouter } from 'vue-router';
 
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-const { isAuthenticated, logout: authLogout, user, getCurrentUser } = useAuth()
-const router = useRouter()
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+const { isAuthenticated, logout: authLogout, user, getCurrentUser } = useAuth();
+const router = useRouter();
 
-const showMenu = ref(false)
-const menuRef = ref(null)
+const showMenu = ref(false);
+const menuRef = ref(null);
 
 const userName = computed(() => {
   // Access .value since user is a ref from Pinia store
-  const u = user.value
-  return u?.username || u?.name || 'User'
-})
+  const u = user.value;
+  return u?.username || u?.name || 'User';
+});
 
 const userInitials = computed(() => {
-  const name = userName.value
-  return name.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase()
-})
+  const name = userName.value;
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+});
 
 const toggleMenu = (e) => {
-  showMenu.value = !showMenu.value
-}
+  showMenu.value = !showMenu.value;
+};
 
 const goToExplore = async () => {
   try {
-    const current = router.currentRoute.value && router.currentRoute.value.path
+    const current = router.currentRoute.value && router.currentRoute.value.path;
     if (current === '/') {
-      document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' })
-      return
+      document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' });
+      return;
     }
 
-    await router.push('/')
+    await router.push('/');
     // small delay to allow home to render its section
     setTimeout(() => {
-      document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' })
-    }, 80)
+      document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 80);
   } catch (e) {
-    console.error('Failed to navigate to Explore:', e)
+    console.error('Failed to navigate to Explore:', e);
   }
-}
+};
 
 const handleLogout = () => {
-  authLogout()
-  showMenu.value = false
-  router.push('/auth/login')
-}
+  authLogout();
+  showMenu.value = false;
+  router.push('/auth/login');
+};
 
 const goToLogin = () => {
-  router.push('/auth/login')
-}
+  router.push('/auth/login');
+};
 
 // Close dropdown when clicking outside
 const onWindowClick = (e) => {
-  if (!menuRef.value) return
+  if (!menuRef.value) return;
   if (!menuRef.value.contains(e.target)) {
-    showMenu.value = false
+    showMenu.value = false;
   }
-}
+};
 
-onMounted(() => window.addEventListener('click', onWindowClick))
-onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
+onMounted(() => window.addEventListener('click', onWindowClick));
+onBeforeUnmount(() => window.removeEventListener('click', onWindowClick));
 </script>
 
 <style scoped>
@@ -198,7 +297,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
   display: flex;
   gap: 2rem;
   flex: 1;
-  margin-bottom:0;
+  margin-bottom: 0;
 }
 
 .nav-link {
@@ -249,7 +348,9 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
   font-weight: 600;
 }
 
-.user-caret { font-size: 0.8rem; }
+.user-caret {
+  font-size: 0.8rem;
+}
 
 .user-dropdown {
   position: absolute;
@@ -264,7 +365,6 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
   overflow: hidden;
 }
 
-
 .dropdown-item {
   display: flex;
   align-items: center;
@@ -278,9 +378,13 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
   color: #fff; /* make logout text white */
 }
 
-.dropdown-item i { color: #fff; } /* make logout icon white */
+.dropdown-item i {
+  color: #fff;
+} /* make logout icon white */
 
-.dropdown-item:hover { background: var(--bg-hover); }
+.dropdown-item:hover {
+  background: var(--bg-hover);
+}
 
 .app-main {
   flex: 1;
@@ -365,13 +469,17 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
   text-decoration: none;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
 }
 
-.social-link i { font-size: 1rem; }
+.social-link i {
+  font-size: 1rem;
+}
 
 .social-link:hover {
   transform: translateY(-3px);
@@ -383,12 +491,15 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 .btn-login {
   background: linear-gradient(135deg, var(--accent-gold), #ffb300);
   color: #111;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   padding: 0.5rem 0.9rem;
   border-radius: 10px;
   font-weight: 600;
   box-shadow: 0 6px 14px rgba(255, 184, 3, 0.12);
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    opacity 0.12s ease;
   cursor: pointer;
 }
 
@@ -400,7 +511,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 
 .btn-login:active {
   transform: translateY(0);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.06);
 }
 
 .btn-login:focus {
@@ -425,7 +536,8 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
   text-decoration: none;
 }
 
-.footer-policy a:hover { color: var(--accent-gold); 
+.footer-policy a:hover {
+  color: var(--accent-gold);
 }
 
 @media (max-width: 768px) {

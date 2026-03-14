@@ -1,11 +1,20 @@
 <template>
   <div class="movie-grid-wrapper">
-    <div v-if="movies.length === 0" class="no-movies">
-      <i class="empty-icon fa-solid fa-film" aria-hidden="true"></i>
+    <div
+      v-if="movies.length === 0"
+      class="no-movies"
+    >
+      <i
+        class="empty-icon fa-solid fa-film"
+        aria-hidden="true"
+      />
       <p>No movies found. Try adjusting your search or add a new movie.</p>
     </div>
 
-    <div v-else class="movie-grid">
+    <div
+      v-else
+      class="movie-grid"
+    >
       <movie-card
         v-for="movie in movies"
         :key="movie.id || movie._id"
@@ -16,7 +25,7 @@
 </template>
 
 <script setup>
-import MovieCard from './MovieCard.vue'
+import MovieCard from './MovieCard.vue';
 
 defineProps({
   movies: {
@@ -24,7 +33,7 @@ defineProps({
     required: true,
     default: () => []
   }
-})
+});
 </script>
 
 <style scoped>
