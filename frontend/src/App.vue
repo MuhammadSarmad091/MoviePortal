@@ -1,12 +1,20 @@
 <template>
-  <div id="app">
+  <error-boundary ref="errorBoundary">
+    <offline-indicator />
     <router-view></router-view>
-  </div>
+  </error-boundary>
 </template>
 
-<script>
-export default {
-  name: 'App'
+<script setup>
+import { ref } from 'vue'
+import ErrorBoundary from './components/error/ErrorBoundary.vue'
+import OfflineIndicator from './components/error/OfflineIndicator.vue'
+
+const errorBoundary = ref(null)
+
+// Expose error boundary for global use
+if (typeof window !== 'undefined') {
+  window.__errorBoundary = errorBoundary
 }
 </script>
 

@@ -35,6 +35,7 @@ const register = async (req, res, next) => {
       message: 'User registered successfully',
       data: {
         userId: user._id,
+        username: user.username,
         token
       }
     });
@@ -68,6 +69,7 @@ const login = async (req, res, next) => {
       message: 'Login successful',
       data: {
         userId: user._id,
+        username: user.username,
         token
       }
     });

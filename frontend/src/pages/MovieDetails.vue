@@ -208,7 +208,7 @@ const isMovieOwner = computed(() => {
     ? movie.value.userId 
     : movie.value.userId?._id || movie.value.userId?.id
   
-  return currentUser.id === movieUserId || currentUser._id === movieUserId
+  return currentUser.userId === movieUserId
 })
 
 // Username of the user who added the movie (handles populated user object or plain id)

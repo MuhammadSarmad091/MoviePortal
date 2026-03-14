@@ -110,7 +110,17 @@ onMounted(async () => {
 
   // Try multiple times with increasing delays to ensure slot content is rendered
   await nextTick()
-  focusTitleInput()
+  let focused = focusTitleInput()
+  
+  if (!focused) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    focused = focusTitleInput()
+  }
+
+  if (!focused) {
+    await new Promise(resolve => setTimeout(resolve, 200))
+    focusTitleInput()
+  }
 
   // Add focus trap for Tab key
   if (modalContent.value) {

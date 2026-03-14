@@ -98,7 +98,8 @@ const showMenu = ref(false)
 const menuRef = ref(null)
 
 const userName = computed(() => {
-  const u = user.value || getCurrentUser()
+  // Access .value since user is a ref from Pinia store
+  const u = user.value
   return u?.username || u?.name || 'User'
 })
 
