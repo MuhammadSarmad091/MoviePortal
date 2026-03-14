@@ -6,10 +6,11 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest --passWithNoTests",
-    "test:integration": "jest tests/integration --detectOpenHandles --forceExit",
-    "test:integration:watch": "jest tests/integration --watch --detectOpenHandles",
-    "test:all": "jest --detectOpenHandles --forceExit",
+    "test": "NODE_ENV=test jest --detectOpenHandles --forceExit",
+    "test:unit": "NODE_ENV=test jest --testPathPattern='src/.*\\.test\\.js$' --passWithNoTests",
+    "test:integration": "NODE_ENV=test jest --testPathPattern='tests/integration/.*\\.test\\.js$' --detectOpenHandles --forceExit",
+    "test:integration:watch": "NODE_ENV=test jest --testPathPattern='tests/integration/.*\\.test\\.js$' --watch --detectOpenHandles",
+    "test:all": "NODE_ENV=test jest --detectOpenHandles --forceExit",
     "seed": "node scripts/seed.js"
   },
   "keywords": [

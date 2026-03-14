@@ -59,8 +59,9 @@ describe('userController.register', () => {
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalled();
     const payload = res.json.mock.calls[0][0];
-    expect(payload).toHaveProperty('token', 'mocked-token');
-    expect(payload.user).toMatchObject({ username: 'newuser', email: 'new@a.com' });
+    expect(payload.message).toBe('User registered successfully');
+    expect(payload.data).toHaveProperty('token', 'mocked-token');
+    expect(payload.data).toHaveProperty('userId', 'mockedUserId');
   });
 });
 
@@ -100,7 +101,8 @@ describe('userController.login', () => {
 
     expect(res.json).toHaveBeenCalled();
     const payload = res.json.mock.calls[0][0];
-    expect(payload).toHaveProperty('token', 'mocked-token');
-    expect(payload.user).toMatchObject({ username: 'u1', email: 'u1@a.com' });
+    expect(payload.message).toBe('Login successful');
+    expect(payload.data).toHaveProperty('token', 'mocked-token');
+    expect(payload.data).toHaveProperty('userId', 'id1');
   });
 });

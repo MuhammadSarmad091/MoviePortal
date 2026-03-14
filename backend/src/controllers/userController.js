@@ -33,11 +33,9 @@ const register = async (req, res, next) => {
 
     res.status(201).json({
       message: 'User registered successfully',
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email
+      data: {
+        userId: user._id,
+        token
       }
     });
   } catch (error) {
@@ -68,11 +66,9 @@ const login = async (req, res, next) => {
 
     res.json({
       message: 'Login successful',
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email
+      data: {
+        userId: user._id,
+        token
       }
     });
   } catch (error) {
@@ -89,10 +85,11 @@ const getCurrentUser = async (req, res, next) => {
     }
 
     res.json({
-      user: {
-        id: user._id,
+      message: 'Profile retrieved successfully',
+      data: {
         username: user.username,
         email: user.email,
+        displayName: user.displayName,
         createdAt: user.createdAt
       }
     });

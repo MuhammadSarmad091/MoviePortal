@@ -1,5 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   collectCoverageFrom: [
     'src/**/*.js',
     '!src/**/*.test.js',
@@ -16,7 +17,11 @@ module.exports = {
   },
   testMatch: [
     '**/src/**/*.test.js',
-    '**/tests/integration/**/*.test.js'
+    '**/tests/**/*.test.js'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/'
   ],
   testTimeout: 30000,
   verbose: true

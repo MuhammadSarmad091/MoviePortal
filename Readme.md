@@ -113,14 +113,14 @@ A full-stack web application for browsing, managing, and reviewing movies. Built
 
 ```bash
 # Build and start all services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # View logs from a specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
+docker compose logs -f backend
+docker compose logs -f frontend
 ```
 
 ### Access the Application
@@ -132,23 +132,23 @@ docker-compose logs -f frontend
 
 ```bash
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop and remove volumes
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Common Docker Commands
 
 ```bash
 # Rebuild images without cache
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Restart services
-docker-compose restart
+docker compose restart
 
 # Check status
-docker-compose ps
+docker compose ps
 ```
 
 ---
@@ -265,16 +265,13 @@ Integration tests validate all API endpoints end-to-end with a real database, in
 cd Task1
 
 # Terminal 1: Start test database with Docker
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.test.yml up -d
 
 # Terminal 2: Navigate to backend and run tests
 cd backend
 
 # Run all integration tests once
 npm run test:integration
-
-# Run tests in watch mode (auto-rerun on file changes)
-npm run test:integration:watch
 
 # Run all tests (unit + integration)
 npm run test:all

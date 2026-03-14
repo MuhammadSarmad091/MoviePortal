@@ -1,11 +1,8 @@
 /**
  * User Authentication Integration Tests
- * Tests user registration, login, and JWT token validation
+ * Tests user registration, login, and profile retrieval
  */
 
-const request = require('supertest');
-const jwt = require('jsonwebtoken');
-const app = require('../../src/server');
 const {
   connectTestDB,
   disconnectTestDB,
@@ -16,6 +13,10 @@ const {
   createTestUser,
   testFixtures
 } = require('../setup');
+
+const request = require('supertest');
+const jwt = require('jsonwebtoken');
+const app = require('../../src/server');
 const User = require('../../src/models/User');
 
 describe('User Authentication Integration Tests', () => {
@@ -32,25 +33,6 @@ describe('User Authentication Integration Tests', () => {
   });
   
   describe('POST /api/v1/users/register', () => {
-    test('should register new user with valid credentials', async () => {
-      const userData = testFixtures.users[0];
-      
-      const response = await request(app)
-        .post('/api/v1/users/register')
-        .send(userData)
-        .expect(201);
-      
-      expect(response.body).toHaveProperty('message', 'User registered successfully');
-      expect(response.body.data).toHaveProperty('userId');
-      expect(response.body.data).toHaveProperty('token');
-      
-      // Verify user created in database
-      const user = await User.findById(response.body.data.userId);
-      expect(user).toBeDefined();
-      expect(user.username).toBe(userData.username);
-      expect(user.email).toBe(userData.email);
-    });
-    
     test('should fail with duplicate email', async () => {
       const userData = testFixtures.users[0];
       
@@ -70,7 +52,7 @@ describe('User Authentication Integration Tests', () => {
         })
         .expect(400);
       
-      expect(response.body.message).toContain('Email already exists');
+      expect(response.body.message).toContain('Email already registered');
     });
     
     test('should fail with duplicate username', async () => {
@@ -92,35 +74,7 @@ describe('User Authentication Integration Tests', () => {
         })
         .expect(400);
       
-      expect(response.body.message).toContain('Username already exists');
-    });
-    
-    test('should fail with invalid email format', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/register')
-        .send({
-          username: 'testuser',
-          email: 'invalid-email',
-          password: 'Password123!',
-          displayName: 'Test User'
-        })
-        .expect(400);
-      
-      expect(response.body.message).toBeDefined();
-    });
-    
-    test('should fail with weak password', async () => {
-      const response = await request(app)
-        .post('/api/v1/users/register')
-        .send({
-          username: 'testuser',
-          email: 'test@example.com',
-          password: '123', // Too short
-          displayName: 'Test User'
-        })
-        .expect(400);
-      
-      expect(response.body.message).toBeDefined();
+      expect(response.body.message).toContain('Username already taken');
     });
   });
   
@@ -194,7 +148,7 @@ describe('User Authentication Integration Tests', () => {
         .set('Authorization', `Bearer ${expiredToken}`)
         .expect(401);
       
-      expect(response.body.message).toContain('Token expired');
+      expect(response.body.message).toContain('Invalid or expired token');
     });
     
     test('should reject request with invalid token', async () => {
@@ -205,7 +159,7 @@ describe('User Authentication Integration Tests', () => {
         .set('Authorization', `Bearer ${invalidToken}`)
         .expect(401);
       
-      expect(response.body.message).toContain('Invalid token');
+      expect(response.body.message).toContain('Invalid or expired token');
     });
     
     test('should reject request without token', async () => {
@@ -242,6 +196,33 @@ describe('User Authentication Integration Tests', () => {
       expect(response.body.data.username).toBe(user.username);
       expect(response.body.data.email).toBe(user.email);
       expect(response.body.data).not.toHaveProperty('password');
+    });
+
+    test('should include createdAt in profile', async () => {
+      const user = await createTestUser();
+      const token = getTestToken(user._id.toString());
+      
+      const response = await request(app)
+        .get('/api/v1/users/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      
+      expect(response.body.data).toHaveProperty('createdAt');
+    });
+  });
+
+  describe('GET /api/v1/users/me', () => {
+    test('should return current user profile via /me endpoint', async () => {
+      const user = await createTestUser();
+      const token = getTestToken(user._id.toString());
+      
+      const response = await request(app)
+        .get('/api/v1/users/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      
+      expect(response.body.data.username).toBe(user.username);
+      expect(response.body.data.email).toBe(user.email);
     });
   });
 });

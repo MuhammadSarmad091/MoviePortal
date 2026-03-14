@@ -4,7 +4,7 @@
 
 ### 1. Start Test Database
 ```bash
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f dockercompose.test.yml up -d
 ```
 
 ### 2. Run Tests
@@ -15,7 +15,7 @@ npm run test:integration
 
 ### 3. Cleanup
 ```bash
-docker-compose -f docker-compose.test.yml down
+docker compose -f dockercompose.test.yml down
 ```
 
 ---

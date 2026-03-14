@@ -11,5 +11,6 @@ router.post('/login', validateLoginInput, login);
 
 // Protected routes
 router.get('/me', authenticate, getCurrentUser);
+router.get('/profile', authenticate, getCurrentUser);
 
 module.exports = router;

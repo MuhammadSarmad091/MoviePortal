@@ -131,7 +131,8 @@ const testFixtures = {
       cast: ['Actor 1', 'Actor 2'],
       rating: 8.5,
       duration: 120,
-      posterUrl: 'https://example.com/poster1.jpg'
+      posterUrl: 'https://example.com/poster1.jpg',
+      trailerUrl: 'https://example.com/trailer1.mp4'
     },
     {
       title: 'Test Movie 2',
@@ -142,7 +143,8 @@ const testFixtures = {
       cast: ['Actor 3', 'Actor 4'],
       rating: 7.8,
       duration: 140,
-      posterUrl: 'https://example.com/poster2.jpg'
+      posterUrl: 'https://example.com/poster2.jpg',
+      trailerUrl: 'https://example.com/trailer2.mp4'
     },
     {
       title: 'Test Movie 3',
@@ -153,22 +155,23 @@ const testFixtures = {
       cast: ['Actor 5'],
       rating: 6.5,
       duration: 100,
-      posterUrl: 'https://example.com/poster3.jpg'
+      posterUrl: 'https://example.com/poster3.jpg',
+      trailerUrl: 'https://example.com/trailer3.mp4'
     }
   ],
   
   reviews: [
     {
-      rating: 5,
-      text: 'Amazing movie! Highly recommend.'
+      rating: 8,
+      content: 'This is an amazing movie with great cinematography and plot!'
     },
     {
-      rating: 3,
-      text: 'It was okay, not what I expected.'
+      rating: 6,
+      content: 'It was an okay movie, not what I expected but still entertaining.'
     },
     {
-      rating: 4,
-      text: 'Good entertainment, worth watching.'
+      rating: 9,
+      content: 'Excellent film, definitely worth watching and highly recommended for everyone.'
     }
   ]
 };

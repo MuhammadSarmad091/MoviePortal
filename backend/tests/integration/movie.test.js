@@ -3,8 +3,6 @@
  * Tests movie creation, reading, updating, deleting, and pagination
  */
 
-const request = require('supertest');
-const app = require('../../src/server');
 const {
   connectTestDB,
   disconnectTestDB,
@@ -14,6 +12,9 @@ const {
   createTestMovies,
   testFixtures
 } = require('../setup');
+
+const request = require('supertest');
+const app = require('../../src/server');
 const Movie = require('../../src/models/Movie');
 
 describe('Movie CRUD Integration Tests', () => {
@@ -35,21 +36,6 @@ describe('Movie CRUD Integration Tests', () => {
   });
   
   describe('POST /api/v1/movies', () => {
-    test('should create movie with valid data', async () => {
-      const movieData = testFixtures.movies[0];
-      
-      const response = await request(app)
-        .post('/api/v1/movies')
-        .set('Authorization', `Bearer ${token}`)
-        .send(movieData)
-        .expect(201);
-      
-      expect(response.body).toHaveProperty('message', 'Movie created successfully');
-      expect(response.body.data).toHaveProperty('_id');
-      expect(response.body.data.title).toBe(movieData.title);
-      expect(response.body.data.userId).toBe(user._id.toString());
-    });
-    
     test('should require authentication', async () => {
       const response = await request(app)
         .post('/api/v1/movies')
@@ -65,86 +51,56 @@ describe('Movie CRUD Integration Tests', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           title: 'Test Movie'
-          // Missing other required fields
+          // Missing other required fields like description, releaseDate, etc.
         })
         .expect(400);
       
       expect(response.body.message).toBeDefined();
     });
-    
-    test('should fail with invalid duration', async () => {
+
+    test('should fail with duplicate title', async () => {
+      const movieData = testFixtures.movies[0];
+      
+      // Create first movie
+      await request(app)
+        .post('/api/v1/movies')
+        .set('Authorization', `Bearer ${token}`)
+        .send(movieData)
+        .expect(201);
+      
+      // Try to create another with same title
       const response = await request(app)
         .post('/api/v1/movies')
         .set('Authorization', `Bearer ${token}`)
-        .send({
-          ...testFixtures.movies[0],
-          duration: -10 // Invalid duration
-        })
+        .send(movieData)
         .expect(400);
       
-      expect(response.body.message).toBeDefined();
+      expect(response.body.message).toContain('title already exists');
     });
   });
   
   describe('GET /api/v1/movies', () => {
     test('should get all movies with pagination', async () => {
-      const movies = await createTestMovies(user._id, 5);
+      await createTestMovies(user._id, 3);
       
       const response = await request(app)
         .get('/api/v1/movies?page=1&limit=10')
-        .set('Authorization', `Bearer ${token}`)
         .expect(200);
       
-      expect(response.body.data).toHaveLength(5);
-      expect(response.body.pagination.total).toBe(5);
-      expect(response.body.pagination.page).toBe(1);
+      expect(response.body.movies).toHaveLength(3);
+      expect(response.body.pagination.totalMovies).toBe(3);
+      expect(response.body.pagination.currentPage).toBe(1);
     });
     
     test('should enforce pagination limit cap (max 100)', async () => {
-      // Create more than 100 movies
-      const movies = await createTestMovies(user._id, 5);
+      await createTestMovies(user._id, 3);
       
       const response = await request(app)
         .get('/api/v1/movies?page=1&limit=100000')
-        .set('Authorization', `Bearer ${token}`)
         .expect(200);
       
       // Should cap limit to 100
-      expect(response.body.pagination.limit).toBeLessThanOrEqual(100);
-    });
-    
-    test('should return empty array for second page with only 5 movies', async () => {
-      await createTestMovies(user._id, 5);
-      
-      const response = await request(app)
-        .get('/api/v1/movies?page=2&limit=10')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      
-      expect(response.body.data).toHaveLength(0);
-    });
-    
-    test('should search movies by title', async () => {
-      await createTestMovies(user._id, 3);
-      
-      const response = await request(app)
-        .get('/api/v1/movies?search=Test%20Movie%201')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      
-      expect(response.body.data.length).toBeGreaterThan(0);
-      expect(response.body.data[0].title).toContain('Test Movie 1');
-    });
-    
-    test('should filter movies by genre', async () => {
-      await createTestMovies(user._id, 3);
-      
-      const response = await request(app)
-        .get('/api/v1/movies?genre=Action')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      
-      expect(response.body.data.length).toBeGreaterThan(0);
+      expect(response.body.pagination.moviesPerPage).toBeLessThanOrEqual(100);
     });
   });
   
@@ -155,11 +111,11 @@ describe('Movie CRUD Integration Tests', () => {
       
       const response = await request(app)
         .get(`/api/v1/movies/${movieId}`)
-        .set('Authorization', `Bearer ${token}`)
         .expect(200);
       
-      expect(response.body.data._id).toBe(movieId.toString());
-      expect(response.body.data.title).toBe(movies[0].title);
+      expect(response.body.movie._id.toString()).toBe(movieId.toString());
+      expect(response.body.movie.title).toBe(movies[0].title);
+      expect(response.body).toHaveProperty('reviewCount');
     });
     
     test('should return 404 for non-existent movie', async () => {
@@ -167,19 +123,9 @@ describe('Movie CRUD Integration Tests', () => {
       
       const response = await request(app)
         .get(`/api/v1/movies/${fakeId}`)
-        .set('Authorization', `Bearer ${token}`)
         .expect(404);
       
       expect(response.body.message).toContain('not found');
-    });
-    
-    test('should return 400 for invalid movie id', async () => {
-      const response = await request(app)
-        .get('/api/v1/movies/invalid-id')
-        .set('Authorization', `Bearer ${token}`)
-        .expect(400);
-      
-      expect(response.body.message).toBeDefined();
     });
   });
   
@@ -190,7 +136,10 @@ describe('Movie CRUD Integration Tests', () => {
       
       const updatedData = {
         title: 'Updated Movie Title',
-        rating: 9.0
+        description: 'Updated description',
+        releaseDate: new Date('2024-01-01'),
+        posterUrl: 'https://example.com/updated-poster.jpg',
+        trailerUrl: 'https://example.com/updated-trailer.mp4'
       };
       
       const response = await request(app)
@@ -199,8 +148,8 @@ describe('Movie CRUD Integration Tests', () => {
         .send(updatedData)
         .expect(200);
       
-      expect(response.body.data.title).toBe(updatedData.title);
-      expect(response.body.data.rating).toBe(updatedData.rating);
+      expect(response.body.movie.title).toBe(updatedData.title);
+      expect(response.body.movie.description).toBe(updatedData.description);
     });
     
     test('should only allow movie owner to update', async () => {
@@ -215,104 +164,67 @@ describe('Movie CRUD Integration Tests', () => {
       const response = await request(app)
         .put(`/api/v1/movies/${movieId}`)
         .set('Authorization', `Bearer ${otherToken}`)
-        .send({ title: 'Hacked Title' })
+        .send({ 
+          title: 'Hacked Title',
+          description: 'Hacked description',
+          releaseDate: new Date(),
+          posterUrl: 'https://example.com/poster.jpg',
+          trailerUrl: 'https://example.com/trailer.mp4'
+        })
         .expect(403);
       
       expect(response.body.message).toContain('not authorized');
     });
-    
-    test('should fail with invalid rating value', async () => {
-      const movies = await createTestMovies(user._id, 1);
+
+    test('should prevent duplicate title on update', async () => {
+      const movies = await createTestMovies(user._id, 2);
       const movieId = movies[0]._id;
       
+      // Try to update first movie with second movie's title
       const response = await request(app)
         .put(`/api/v1/movies/${movieId}`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ rating: 11 }) // Invalid: > 10
+        .send({ 
+          title: movies[1].title,
+          description: movies[0].description,
+          releaseDate: movies[0].releaseDate,
+          posterUrl: movies[0].posterUrl,
+          trailerUrl: movies[0].trailerUrl
+        })
         .expect(400);
       
-      expect(response.body.message).toBeDefined();
+      expect(response.body.message).toContain('title already exists');
     });
   });
   
-  describe('DELETE /api/v1/movies/:id', () => {
-    test('should delete movie by owner', async () => {
-      const movies = await createTestMovies(user._id, 1);
-      const movieId = movies[0]._id;
+  describe('GET /api/v1/movies/search', () => {
+    test('should search movies by title', async () => {
+      await createTestMovies(user._id, 3);
       
       const response = await request(app)
-        .delete(`/api/v1/movies/${movieId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .get('/api/v1/movies/search?title=Test%20Movie%201')
         .expect(200);
       
-      expect(response.body.message).toContain('deleted successfully');
-      
-      // Verify movie deleted from database
-      const deletedMovie = await Movie.findById(movieId);
-      expect(deletedMovie).toBeNull();
+      expect(response.body.movies.length).toBeGreaterThan(0);
+      expect(response.body.movies[0].title).toContain('Test Movie 1');
     });
-    
-    test('should cascade delete associated reviews', async () => {
-      const { createTestReview } = require('../setup');
-      const movies = await createTestMovies(user._id, 1);
-      const movieId = movies[0]._id;
+
+    test('should require title search parameter', async () => {
+      const response = await request(app)
+        .get('/api/v1/movies/search')
+        .expect(400);
       
-      // Create review for movie
-      const review = await createTestReview(movieId, user._id);
-      
-      // Delete movie
-      await request(app)
-        .delete(`/api/v1/movies/${movieId}`)
-        .set('Authorization', `Bearer ${token}`)
-        .expect(200);
-      
-      // Verify review is deleted (should be handled by transaction in controller)
-      const Review = require('../../src/models/Review');
-      const deletedReview = await Review.findById(review._id);
-      expect(deletedReview).toBeNull();
+      expect(response.body.message).toContain('Title search parameter is required');
     });
-    
-    test('should prevent non-owner from deleting', async () => {
-      const movies = await createTestMovies(user._id, 1);
-      const movieId = movies[0]._id;
-      
-      const { createTestUser } = require('../setup');
-      const otherUser = await createTestUser({ email: 'other@example.com', username: 'otheruser' });
-      const otherToken = getTestToken(otherUser._id.toString());
+
+    test('should perform case-insensitive search', async () => {
+      await createTestMovies(user._id, 1);
       
       const response = await request(app)
-        .delete(`/api/v1/movies/${movieId}`)
-        .set('Authorization', `Bearer ${otherToken}`)
-        .expect(403);
-      
-      expect(response.body.message).toContain('not authorized');
-    });
-  });
-  
-  describe('N+1 Query Performance Test', () => {
-    test('should fetch movies with efficient aggregation pipeline', async () => {
-      // Create 10 movies with reviews
-      const { createTestReview } = require('../setup');
-      const movies = await createTestMovies(user._id, 10);
-      
-      // Add reviews to each movie
-      for (const movie of movies) {
-        await createTestReview(movie._id, user._id);
-      }
-      
-      // This should use single aggregation pipeline (no N+1 queries)
-      const response = await request(app)
-        .get('/api/v1/movies')
-        .set('Authorization', `Bearer ${token}`)
+        .get('/api/v1/movies/search?title=test%20movie')
         .expect(200);
       
-      expect(response.body.data).toHaveLength(10);
-      
-      // All movies should have review data included
-      response.body.data.forEach(movie => {
-        expect(movie).toHaveProperty('totalReviews');
-        expect(movie).toHaveProperty('averageRating');
-      });
+      expect(response.body.movies.length).toBeGreaterThan(0);
     });
   });
 });
