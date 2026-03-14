@@ -177,8 +177,6 @@ const showEditModal = ref(false)
 // Get the movie ID from the route
 const movieId = computed(() => {
   const id = route.params.id
-  console.log('Route params:', route.params)
-  console.log('Movie ID from route:', id)
   return id
 })
 
@@ -225,39 +223,20 @@ const addedBy = computed(() => {
 const fetchMovieDetails = async () => {
   try {
     if (!movieId.value) {
-      console.warn('No movie ID available')
       return
     }
     
     loading.value = true
     error.value = null
 
-    const url = `${API_BASE_URL}/movies/${movieId.value}/with-rank`
-    console.log('Fetching movie details from:', url)
-    
-    const response = await fetch(url)
-    console.log('Movie details response status:', response.status)
-    
-    if (!response.ok) {
-      throw new Error(`Failed to load movie details: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    console.log('Movie API response:', data)
+    const response = await api.get(`/movies/${movieId.value}/with-rank`)
     
     // The backend returns { movie, reviewCount, rank }
-    movie.value = data.movie || data
-    movieRank.value = data.rank || null
-    console.log('Movie loaded successfully:', movie.value)
-    console.log('Movie rank:', movieRank.value)
+    movie.value = response.data.movie || response.data
+    movieRank.value = response.data.rank || null
     posterLoaded.value = true
-
-    if (isAuthenticated.value) {
-      await checkFavoriteStatus()
-    }
   } catch (err) {
-    console.error('Error fetching movie details:', err)
-    error.value = err.message || 'An error occurred while loading the movie'
+    error.value = err.response?.data?.message || err.message || 'An error occurred while loading the movie'
   } finally {
     loading.value = false
   }
@@ -266,77 +245,21 @@ const fetchMovieDetails = async () => {
 const fetchReviews = async () => {
   try {
     if (!movieId.value) {
-      console.warn('No movie ID available')
       return
     }
     
     const page = reviewsPage.value
-    const url = `${API_BASE_URL}/movies/${movieId.value}/reviews?page=${page}&limit=5`
-    console.log('Fetching reviews from:', url)
-    
-    const response = await fetch(url)
-    console.log('Reviews response status:', response.status)
-    
-    if (!response.ok) {
-      throw new Error(`Failed to load reviews: ${response.status}`)
-    }
-
-    const data = await response.json()
-    console.log('Reviews API response:', data)
+    const response = await api.get(`/movies/${movieId.value}/reviews?page=${page}&limit=5`)
     
     // Backend returns { reviews, pagination }
-    reviews.value = data.reviews || []
-    totalReviews.value = data.pagination?.totalReviews || 0
-    reviewsPages.value = data.pagination?.totalPages || 1
-    console.log('Reviews loaded:', reviews.value.length, 'Total pages:', reviewsPages.value)
+    reviews.value = response.data.reviews || []
+    totalReviews.value = response.data.pagination?.totalReviews || 0
+    reviewsPages.value = response.data.pagination?.totalPages || 1
   } catch (err) {
-    console.error('Failed to fetch reviews:', err)
-  }
-}
-
-const checkFavoriteStatus = async () => {
-  try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(
-      `${API_BASE_URL}/favorites/check/${movieId.value}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    )
-
-    if (response.ok) {
-      const data = await response.json()
-      isFavorite.value = data.isFavorite
-    }
-  } catch (err) {
-    console.error('Failed to check favorite status:', err)
-  }
-}
-
-const toggleFavorite = async () => {
-  try {
-    const token = localStorage.getItem('token')
-    const method = isFavorite.value ? 'DELETE' : 'POST'
-
-    const response = await fetch(`${API_BASE_URL}/favorites/${movieId.value}`, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.ok) {
-      isFavorite.value = !isFavorite.value
-    }
-  } catch (err) {
-    console.error('Failed to toggle favorite:', err)
   }
 }
 
 const handleImageError = () => {
-  console.log('Poster image failed to load')
   posterLoaded.value = false
   if (movie.value) {
     movie.value.posterUrl = null
@@ -373,62 +296,42 @@ const getYoutubeEmbedUrl = (url) => {
 
 const handleAddReview = async (reviewData) => {
   try {
-    const token = localStorage.getItem('token')
-    const method = reviewData.reviewId ? 'PUT' : 'POST'
+    const method = reviewData.reviewId ? 'put' : 'post'
     const url = reviewData.reviewId
-      ? `${API_BASE_URL}/reviews/${reviewData.reviewId}`
-      : `${API_BASE_URL}/movies/${movieId.value}/reviews`
+      ? `/reviews/${reviewData.reviewId}`
+      : `/movies/${movieId.value}/reviews`
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
+    if (method === 'put') {
+      await api.put(url, {
+        rating: reviewData.rating,
+        content: reviewData.content
+      })
+    } else {
+      await api.post(url, {
         movieId: reviewData.movieId,
         rating: reviewData.rating,
         content: reviewData.content
       })
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Failed to save review')
     }
 
     reviewError.value = null
     // Fetch both reviews and updated movie details to refresh rating
     await Promise.all([fetchReviews(), fetchMovieDetails()])
   } catch (err) {
-    console.error('Failed to add/edit review:', err)
-    reviewError.value = err.message
+    reviewError.value = err.response?.data?.message || err.message || 'Failed to save review'
   }
 }
 
 const handleEditReview = (review) => {
-  console.log('Edit review:', review)
 }
 
 const handleDeleteReview = async (reviewId) => {
   try {
-    const token = localStorage.getItem('token')
-
-    const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to delete review')
-    }
+    await api.delete(`/reviews/${reviewId}`)
 
     // Fetch both reviews and updated movie details to refresh rating
     await Promise.all([fetchReviews(), fetchMovieDetails()])
   } catch (err) {
-    console.error('Failed to delete review:', err)
   }
 }
 
@@ -454,7 +357,6 @@ onMounted(async () => {
 
   const id = movieId.value
   if (id && id !== 'undefined') {
-    console.log('Component mounted, loading movie:', id)
     await fetchMovieDetails()
     await fetchReviews()
   }
@@ -466,7 +368,6 @@ watch(movieId, async (newId) => {
   }
 
   if (newId && newId !== 'undefined') {
-    console.log('MovieId changed to:', newId)
     reviewsPage.value = 1
     await fetchMovieDetails()
     await fetchReviews()
@@ -496,7 +397,6 @@ const handleMovieUpdate = async (movieData) => {
     // Reload the movie details
     await fetchMovieDetails()
   } catch (err) {
-    console.error('Error updating movie:', err)
     error.value = err.response?.data?.message || 'Failed to update movie'
   }
 }
@@ -511,7 +411,6 @@ const deleteMovie = async () => {
     // Redirect to home page after successful deletion
     router.push('/')
   } catch (err) {
-    console.error('Error deleting movie:', err)
     error.value = err.response?.data?.message || 'Failed to delete movie'
   }
 }

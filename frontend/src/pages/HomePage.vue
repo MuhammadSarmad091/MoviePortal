@@ -116,7 +116,6 @@ const loadMovies = async () => {
     }
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load movies. Please try again.'
-    console.error('Error loading movies:', err)
     movies.value = []
   } finally {
     isLoading.value = false
@@ -171,6 +170,7 @@ const onResize = () => {
 onMounted(() => {
   computeItemsPerPage()
   window.addEventListener('resize', onResize)
+  loadMovies()
 })
 
 onBeforeUnmount(() => {
@@ -244,20 +244,14 @@ const handleMovieAdded = async (movieData) => {
     currentPage.value = 1
     await loadMovies()
   } catch (err) {
-    console.error('Error saving movie:', err)
     // Display server message inside modal if present
     const msg = err.response?.data?.message || err.message || 'Failed to save movie'
     addMovieServerError.value = msg
     // keep modal open so user can fix
     showAddMovieModal.value = true
-    console.error('Save movie error message:', msg)
   }
 }
 
-// Load movies on mount
-onMounted(() => {
-  loadMovies()
-})
 </script>
 
 <style scoped>

@@ -1,7 +1,24 @@
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
-    <div class="modal-content">
-      <button class="modal-close" @click="$emit('close')" title="Close modal">
+  <div
+    class="modal-overlay"
+    @click.self="closeModal"
+    @keydown.esc="closeModal"
+    role="presentation"
+  >
+    <div
+      ref="modalContent"
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      :aria-describedby="descId"
+    >
+      <button
+        class="modal-close"
+        @click="closeModal"
+        title="Close modal"
+        aria-label="Close modal"
+      >
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
       <slot></slot>
@@ -10,7 +27,107 @@
 </template>
 
 <script setup>
-defineEmits(['close'])
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+
+const emit = defineEmits(['close'])
+defineProps({
+  titleId: {
+    type: String,
+    default: 'modal-title'
+  },
+  descId: {
+    type: String,
+    default: 'modal-description'
+  }
+})
+
+const modalContent = ref(null)
+
+const closeModal = () => {
+  emit('close')
+}
+
+const handleKeyDown = (e) => {
+  if (e.key === 'Escape') {
+    closeModal()
+  }
+}
+
+const trapFocus = (e) => {
+  if (!modalContent.value) return
+
+  const focusableElements = modalContent.value.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )
+
+  if (focusableElements.length === 0) return
+
+  const firstElement = focusableElements[0]
+  const lastElement = focusableElements[focusableElements.length - 1]
+
+  if (e.shiftKey) {
+    // Shift + Tab
+    if (document.activeElement === firstElement) {
+      e.preventDefault()
+      lastElement.focus()
+    }
+  } else {
+    // Tab
+    if (document.activeElement === lastElement) {
+      e.preventDefault()
+      firstElement.focus()
+    }
+  }
+}
+
+onMounted(async () => {
+  // Add keyboard event listeners immediately
+  document.addEventListener('keydown', handleKeyDown)
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden'
+
+  // Function to try focusing the title input field
+  const focusTitleInput = () => {
+    if (!modalContent.value) return false
+
+    // First, try to find the title input by id
+    const titleInput = modalContent.value.querySelector('#title')
+    if (titleInput) {
+      titleInput.focus()
+      return true
+    }
+
+    // Fallback: find the first input field (excluding the close button area)
+    const inputs = modalContent.value.querySelectorAll('input, textarea')
+    if (inputs.length > 0) {
+      inputs[0].focus()
+      return true
+    }
+
+    return false
+  }
+
+  // Try multiple times with increasing delays to ensure slot content is rendered
+  await nextTick()
+  focusTitleInput()
+
+  // Add focus trap for Tab key
+  if (modalContent.value) {
+    modalContent.value.addEventListener('keydown', trapFocus)
+  }
+})
+
+onUnmounted(() => {
+  // Remove event listeners
+  document.removeEventListener('keydown', handleKeyDown)
+  if (modalContent.value) {
+    modalContent.value.removeEventListener('keydown', trapFocus)
+  }
+
+  // Restore body scroll
+  document.body.style.overflow = ''
+})
 </script>
 
 <style scoped>
