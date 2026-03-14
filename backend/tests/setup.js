@@ -6,7 +6,15 @@
 require('dotenv').config({ path: '.env.test' });
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const config = require('../src/config/environment');
+const { testConfig, validateTestEnvironment } = require('../src/config/testEnvironment');
+
+// Validate test environment at startup
+try {
+  validateTestEnvironment();
+} catch (error) {
+  console.error('⚠️  Test Environment Validation Error:', error.message);
+  process.exit(1);
+}
 
 // Test database connection setup
 let mongoConnection = null;
@@ -16,7 +24,7 @@ let mongoConnection = null;
  */
 async function connectTestDB() {
   try {
-    mongoConnection = await mongoose.connect(process.env.MONGODB_URI);
+    mongoConnection = await mongoose.connect(testConfig.database.mongoUri);
     console.log('✓ Connected to test database');
     return mongoConnection;
   } catch (error) {
@@ -70,8 +78,8 @@ function getTestToken(userId, options = {}) {
     ...options
   };
   
-  return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRY || '7d'
+  return jwt.sign(payload, testConfig.jwt.secret, {
+    expiresIn: testConfig.jwt.expiry
   });
 }
 
@@ -82,7 +90,7 @@ function getTestToken(userId, options = {}) {
 function getExpiredToken(userId) {
   const payload = { userId };
   
-  return jwt.sign(payload, process.env.JWT_SECRET, {
+  return jwt.sign(payload, testConfig.jwt.secret, {
     expiresIn: '-1h' // Already expired
   });
 }

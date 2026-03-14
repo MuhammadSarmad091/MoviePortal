@@ -113,7 +113,7 @@ A full-stack web application for browsing, managing, and reviewing movies. Built
 
 ```bash
 # Build and start all services
-docker compose up -d
+docker compose -f docker-compose.yml up -d
 
 # View logs
 docker compose logs -f
@@ -132,10 +132,10 @@ docker compose logs -f frontend
 
 ```bash
 # Stop all services
-docker compose down
+docker compose -f docker-compose.yml down
 
 # Stop and remove volumes
-docker compose down -v
+docker compose -f docker-compose.yml down -v
 ```
 
 ### Common Docker Commands
@@ -330,7 +330,7 @@ Time:        12.8s
 
 ```bash
 # Start MongoDB container once
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.test.yml up -d
 
 # Run tests in watch mode for continuous testing
 cd backend
@@ -340,7 +340,7 @@ npm run test:integration:watch
 # Tests complete in ~12-15 seconds
 
 # Stop when done
-docker-compose -f docker-compose.test.yml down
+docker compose -f docker-compose.test.yml down
 ```
 
 For detailed testing documentation, see [backend/TESTING.md](backend/TESTING.md)
@@ -425,10 +425,10 @@ For detailed testing documentation, see [backend/TESTING.md](backend/TESTING.md)
 ### Docker Build Fails
 ```bash
 # Rebuild with no cache
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Check logs
-docker-compose logs backend
+docker compose logs backend
 ```
 
 ### Port Already in Use

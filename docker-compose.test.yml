@@ -18,6 +18,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    
+    # Resource limits for test database
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
 
 volumes:
   mongodb_test_data:
