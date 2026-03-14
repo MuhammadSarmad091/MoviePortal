@@ -9,18 +9,17 @@ export function useApi() {
     apiInstance = axios.create({
       baseURL,
       timeout: 10000,
+      withCredentials: true, // Enable sending cookies with requests
       headers: {
         'Content-Type': 'application/json'
       }
     });
 
-    // Request interceptor
+    // Request interceptor - no need to manually add token, httpOnly cookie is auto-sent
     apiInstance.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        // Token is now in httpOnly cookie, automatically sent by browser
+        // No need to manually add Authorization header
         return config;
       },
       (error) => {

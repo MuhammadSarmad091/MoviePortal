@@ -2,6 +2,25 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useApi } from '../composables/useApi';
 
+/**
+ * Authentication Store with Security Best Practices
+ *
+ * Security Implementation:
+ * - JWT token stored in httpOnly cookie (set by backend)
+ *   - Not accessible via JavaScript (XSS protection)
+ *   - Automatically sent with every request (via withCredentials)
+ *   - Cannot be stolen by malicious scripts
+ *
+ * - User data (userId, username, email) stored in:
+ *   1. In-memory Pinia store (reactive, session-only)
+ *   2. localStorage (for page refresh persistence)
+ *   - User data is non-sensitive and required by components
+ *   - localStorage serves as fallback on page load
+ *
+ * - API requests use axios with withCredentials: true
+ *   - Browser automatically includes httpOnly cookies
+ *   - No manual token injection needed
+ */
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref(null);
@@ -11,15 +30,13 @@ export const useAuthStore = defineStore('auth', () => {
   // Initialize user from localStorage on store creation
   const initializeAuth = () => {
     try {
-      const token = localStorage.getItem('token');
       const userData = localStorage.getItem('user');
 
-      if (token && userData) {
+      if (userData) {
         user.value = JSON.parse(userData);
       }
     } catch (err) {
       // Clear corrupted data
-      localStorage.removeItem('token');
       localStorage.removeItem('user');
       user.value = null;
     }
@@ -62,10 +79,11 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Invalid response from server');
       }
 
-      // Store token in localStorage
-      localStorage.setItem('token', token);
+      // Token is now managed via httpOnly cookie from backend
+      // Do NOT store token in localStorage for security
+      // (XSS cannot access httpOnly cookies)
 
-      // Store complete user data with username from backend
+      // Store only non-sensitive user data in localStorage for persistence on page refresh
       const completeUser = {
         userId: userId,
         username: username,
@@ -74,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       localStorage.setItem('user', JSON.stringify(completeUser));
 
-      // Update the reactive ref
+      // Update the reactive ref (in-memory store)
       user.value = completeUser;
 
       loading.value = false;
@@ -111,10 +129,11 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Invalid response from server');
       }
 
-      // Store token in localStorage
-      localStorage.setItem('token', token);
+      // Token is now managed via httpOnly cookie from backend
+      // Do NOT store token in localStorage for security
+      // (XSS cannot access httpOnly cookies)
 
-      // Store complete user data with username from backend
+      // Store only non-sensitive user data in localStorage for persistence on page refresh
       const completeUser = {
         userId: userId,
         username: usernameFromBackend,
@@ -123,7 +142,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       localStorage.setItem('user', JSON.stringify(completeUser));
 
-      // Update the reactive ref
+      // Update the reactive ref (in-memory store)
       user.value = completeUser;
 
       loading.value = false;
@@ -136,7 +155,8 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    // Clear user data from localStorage and store
+    // Token in httpOnly cookie is automatically cleared by backend on logout
     localStorage.removeItem('user');
     user.value = null;
     error.value = null;
