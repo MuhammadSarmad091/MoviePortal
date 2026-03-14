@@ -192,23 +192,46 @@ npm run dev
 
 ### Backend Tests
 
+
+**Run Integration Tests:**
+
 ```bash
-# Navigate to backend directory
+# Navigate to root directory
+cd MoviesPortal
+
+# Terminal 1: Start test database with Docker
+docker compose -f docker-compose.test.yml up -d
+
+# Terminal 2: Navigate to backend and run tests
 cd backend
 
-# Run all tests once
-npm run test
+# Run only unit tests
+npm run test:unit
 
+# Run all integration tests once
+npm run test:integration
+
+# Run all tests (unit + integration)
+npm run test:all
+```
+
+**Stop Test Database:**
+
+```bash
+# From root directory
+docker compose -f docker-compose.test.yml down
 ```
 
 **Test Files:** `src/controllers/*.test.js`
+                `src/tests/*.test.js`
 
 **Framework:** Jest
 
 **Features:**
 - Unit tests for controllers
+- Integration tests with separate docker database
 - Mocked external dependencies (MongoDB, authentication)
-- ~8 test cases covering create, read, update, delete operations
+- ~54 test cases covering create, read, update, delete operations
 
 ### Frontend Tests
 
@@ -250,38 +273,6 @@ Test Files  4 passed (4)
 Tests      22 passed (22)
 ```
 
-### Backend Integration Tests
-
-Integration tests validate all API endpoints end-to-end with a real database, including security fixes, race condition prevention, and performance optimizations.
-
-**Prerequisites:**
-- Docker installed and running
-- 10-15 seconds for test execution
-
-**Run Integration Tests:**
-
-```bash
-# Navigate to root directory
-cd Task1
-
-# Terminal 1: Start test database with Docker
-docker compose -f docker-compose.test.yml up -d
-
-# Terminal 2: Navigate to backend and run tests
-cd backend
-
-# Run all integration tests once
-npm run test:integration
-
-# Run all tests (unit + integration)
-npm run test:all
-```
-
-**Stop Test Database:**
-
-```bash
-# From root directory
-docker-compose -f docker-compose.test.yml down
 ```
 
 ## Section 4: Code Quality
