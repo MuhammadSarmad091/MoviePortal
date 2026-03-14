@@ -422,18 +422,21 @@ const handleAddReview = async (reviewData) => {
   }
 };
 
-const handleEditReview = (review) => {};
+const handleEditReview = (_review) => {
+  // Edit is handled by ReviewList component internally
+  // This handler is kept for potential future enhancements
+};
 
 const handleDeleteReview = async (reviewId) => {
   try {
-    await api.delete(`/reviews/${reviewId}`)
+    await api.delete(`/reviews/${reviewId}`);
 
     // Fetch both reviews and updated movie details to refresh rating
-    await Promise.all([fetchReviews(), fetchMovieDetails()])
+    await Promise.all([fetchReviews(), fetchMovieDetails()]);
   } catch (err) {
     // Silently fail on delete errors
   }
-}
+};
 
 const handleReviewsPageChange = (page) => {
   reviewsPage.value = page;

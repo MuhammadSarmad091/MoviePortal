@@ -143,14 +143,17 @@ const toggleForm = () => {
 const isReviewAuthor = (review) => {
   if (!currentUser.value || !review.userId) return false;
 
-  // Handle userId as string (populated ID)
+  // Current user has userId property
+  const currentUserId = currentUser.value.userId;
+  
+  // Handle review.userId as string (populated ID)
   if (typeof review.userId === 'string') {
-    return currentUser.value.id === review.userId || currentUser.value._id === review.userId;
+    return currentUserId === review.userId;
   }
 
-  // Handle userId as object with id or _id fields
+  // Handle review.userId as object with id or _id fields
   const reviewUserId = review.userId.id || review.userId._id;
-  return currentUser.value.id === reviewUserId || currentUser.value._id === reviewUserId;
+  return currentUserId === reviewUserId;
 };
 
 const handleSubmitReview = async (reviewData) => {

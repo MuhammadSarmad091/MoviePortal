@@ -187,7 +187,7 @@ const deleteReview = () => {
 }
 
 .delete-button:hover {
-  color: var(--danger);
+  color: #ff4757;
 }
 
 .review-rating {
