@@ -1,55 +1,15 @@
-const Review = require('../models/Review');
-const Movie = require('../models/Movie');
-const mongoose = require('mongoose');
-
-// Pagination configuration
-const MAX_PAGE = 1000;
-const MAX_LIMIT = 100;
-const DEFAULT_LIMIT = 10;
-
-/**
- * Validate and cap pagination parameters to prevent DoS attacks
- * @param {number} page - Requested page number
- * @param {number} limit - Requested limit per page
- * @returns {object} - Validated page and limit
- */
-const validatePagination = (page, limit) => {
-  page = Math.max(1, Math.min(parseInt(page) || 1, MAX_PAGE));
-  limit = Math.max(1, Math.min(parseInt(limit) || DEFAULT_LIMIT, MAX_LIMIT));
-  return { page, limit };
-};
-
-async function updateMovieRating(movieId) {
-  // Robust match: compare stringified movieId so aggregation works whether
-  // reviews.movieId is stored as ObjectId or as a string.
-  const movieIdStr = movieId.toString()
-  const stats = await Review.aggregate([
-    { $match: { $expr: { $eq: [ { $toString: '$movieId' }, movieIdStr ] } } },
-    { $group: { _id: '$movieId', avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
-  ]);
-
-  if (stats.length > 0) {
-    const { avgRating, count } = stats[0];
-    const rounded = Math.round((avgRating + Number.EPSILON) * 10) / 10 // one decimal
-    await Movie.findByIdAndUpdate(movieId, { ratings: rounded });
-  } else {
-    await Movie.findByIdAndUpdate(movieId, { ratings: 0 });
-  }
-}
+const { validatePagination } = require('../utils/pagination');
+const reviewService = require('../services/reviewService');
 
 const getReviewsForMovie = async (req, res, next) => {
   try {
     const { id } = req.params; // movie id
     const { page, limit } = validatePagination(req.query.page, req.query.limit);
-    const skip = (page - 1) * limit;
-
-    const reviews = await Review.find({ movieId: id })
-      .populate('userId', 'username')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Review.countDocuments({ movieId: id });
+    const { reviews, total } = await reviewService.getReviewsForMovie({
+      movieId: id,
+      page,
+      limit
+    });
 
     res.json({
       reviews,
@@ -70,31 +30,19 @@ const createReviewForMovie = async (req, res, next) => {
     const { id } = req.params; // movie id
     const { content, rating } = req.body;
 
-    // Ensure movie exists
-    const movie = await Movie.findById(id);
-    if (!movie) {
-      return res.status(404).json({ message: 'Movie not found' });
-    }
-
-    // Check if user already reviewed this movie
-    const existingReview = await Review.findOne({ movieId: id, userId: req.userId });
-    if (existingReview) {
-      return res.status(400).json({ message: 'You have already reviewed this movie. You can only have one review per movie.' });
-    }
-
-    const review = new Review({
+    const result = await reviewService.createReviewForMovie({
+      movieId: id,
       content,
       rating,
-      movieId: id,
       userId: req.userId
     });
-
-    await review.save();
-
-    // Update movie average rating
-    await updateMovieRating(id);
-
-    res.status(201).json({ message: 'Review created', review });
+    if (result.status === 'MOVIE_NOT_FOUND') {
+      return res.status(404).json({ message: 'Movie not found' });
+    }
+    if (result.status === 'REVIEW_EXISTS') {
+      return res.status(400).json({ message: 'You have already reviewed this movie. You can only have one review per movie.' });
+    }
+    res.status(201).json({ message: 'Review created', review: result.review });
   } catch (error) {
     next(error);
   }
@@ -105,23 +53,17 @@ const updateReview = async (req, res, next) => {
     const { id } = req.params; // review id
     const { content, rating } = req.body;
 
-    const review = await Review.findById(id);
-    if (!review) return res.status(404).json({ message: 'Review not found' });
-
-    if (review.userId.toString() !== req.userId) {
+    const result = await reviewService.updateReview({
+      reviewId: id,
+      userId: req.userId,
+      content,
+      rating
+    });
+    if (result.status === 'NOT_FOUND') return res.status(404).json({ message: 'Review not found' });
+    if (result.status === 'FORBIDDEN') {
       return res.status(403).json({ message: 'You are not authorized to update this review' });
     }
-
-    if (content) review.content = content;
-    if (rating) review.rating = rating;
-    review.updatedAt = Date.now();
-
-    await review.save();
-
-    // Update movie average rating
-    await updateMovieRating(review.movieId);
-
-    res.json({ message: 'Review updated', review });
+    res.json({ message: 'Review updated', review: result.review });
   } catch (error) {
     next(error);
   }
@@ -131,19 +73,14 @@ const deleteReview = async (req, res, next) => {
   try {
     const { id } = req.params; // review id
 
-    const review = await Review.findById(id);
-    if (!review) return res.status(404).json({ message: 'Review not found' });
-
-    if (review.userId.toString() !== req.userId) {
+    const result = await reviewService.deleteReview({
+      reviewId: id,
+      userId: req.userId
+    });
+    if (result.status === 'NOT_FOUND') return res.status(404).json({ message: 'Review not found' });
+    if (result.status === 'FORBIDDEN') {
       return res.status(403).json({ message: 'You are not authorized to delete this review' });
     }
-
-    const movieId = review.movieId;
-
-    await Review.findByIdAndDelete(id);
-
-    // Update movie average rating
-    await updateMovieRating(movieId);
 
     res.json({ message: 'Review deleted' });
   } catch (error) {

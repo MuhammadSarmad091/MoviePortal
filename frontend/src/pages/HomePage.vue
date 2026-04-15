@@ -109,14 +109,13 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useAuth } from '../composables/useAuth';
-import { useApi } from '../composables/useApi';
+import { movieService } from '../services/movieService';
 import SearchBar from '../components/search/SearchBar.vue';
 import MovieGrid from '../components/movie/MovieGrid.vue';
 import Pagination from '../components/pagination/Pagination.vue';
 import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue';
 
 const { isAuthenticated } = useAuth();
-const { api } = useApi();
 
 const movies = ref([]);
 const isLoading = ref(false);
@@ -134,14 +133,14 @@ const loadMovies = async () => {
 
   try {
     const limit = itemsPerPage.value || 10;
-    const endpoint = searchQuery.value
-      ? `/movies/search?title=${encodeURIComponent(searchQuery.value)}&page=${currentPage.value}&limit=${limit}`
-      : `/movies?page=${currentPage.value}&limit=${limit}`;
+    const data = await movieService.getMovies({
+      page: currentPage.value,
+      limit,
+      query: searchQuery.value
+    });
 
-    const response = await api.get(endpoint);
-
-    movies.value = response.data.movies || [];
-    totalPages.value = response.data.pagination?.totalPages || 1;
+    movies.value = data.movies || [];
+    totalPages.value = data.pagination?.totalPages || 1;
 
     // Reset to page 1 if no results
     if (movies.value.length === 0 && currentPage.value > 1) {
@@ -194,8 +193,11 @@ const onResize = () => {
     const old = itemsPerPage.value;
     computeItemsPerPage();
     if (itemsPerPage.value !== old) {
-      currentPage.value = 1;
-      loadMovies();
+      if (currentPage.value !== 1) {
+        currentPage.value = 1;
+      } else {
+        loadMovies();
+      }
     }
   }, 150);
 };
@@ -218,19 +220,24 @@ watch(currentPage, async (newPage) => {
 
 const handleSearch = async (query) => {
   searchQuery.value = query;
-  currentPage.value = 1;
+  if (currentPage.value !== 1) {
+    currentPage.value = 1;
+    return;
+  }
   await loadMovies();
 };
 
 const handleClearSearch = async () => {
   searchQuery.value = '';
-  currentPage.value = 1;
+  if (currentPage.value !== 1) {
+    currentPage.value = 1;
+    return;
+  }
   await loadMovies();
 };
 
 const goToPage = async (page) => {
   currentPage.value = page;
-  await loadMovies();
   // Scroll to movies section
   document.querySelector('.movies-section')?.scrollIntoView({ behavior: 'smooth' });
 };
@@ -253,7 +260,7 @@ const handleMovieAdded = async (movieData) => {
   try {
     if (movieData.isEditing && movieData.movieId) {
       // Update existing movie
-      await api.put(`/movies/${movieData.movieId}`, {
+      await movieService.updateMovie(movieData.movieId, {
         title: movieData.title,
         description: movieData.description,
         releaseDate: movieData.releaseDate,
@@ -262,7 +269,7 @@ const handleMovieAdded = async (movieData) => {
       });
     } else {
       // Create new movie
-      await api.post('/movies', {
+      await movieService.createMovie({
         title: movieData.title,
         description: movieData.description,
         releaseDate: movieData.releaseDate,
@@ -274,8 +281,11 @@ const handleMovieAdded = async (movieData) => {
     showAddMovieModal.value = false;
     addMovieServerError.value = null;
     // Reload movies after adding a new one
-    currentPage.value = 1;
-    await loadMovies();
+    if (currentPage.value !== 1) {
+      currentPage.value = 1;
+    } else {
+      await loadMovies();
+    }
   } catch (err) {
     // Display server message inside modal if present
     const msg = err.response?.data?.message || err.message || 'Failed to save movie';

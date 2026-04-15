@@ -10,6 +10,7 @@ RUN npm install --only=production
 
 # Copy application code
 COPY src ./src
+COPY scripts ./scripts
 
 # Expose port
 EXPOSE 5000

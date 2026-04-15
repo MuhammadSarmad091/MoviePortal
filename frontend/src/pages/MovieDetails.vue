@@ -243,30 +243,22 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuth } from '../composables/useAuth'
-import { useApi } from '../composables/useApi'
-import ReviewList from '../components/review/ReviewList.vue'
-import ShareButton from '../components/buttons/ShareButton.vue'
-import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue'
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useAuth } from '../composables/useAuth';
+import { useMovieDetails } from '../composables/useMovieDetails';
+import { useMovieReviews } from '../composables/useMovieReviews';
+import { movieService } from '../services/movieService';
+import { reviewService } from '../services/reviewService';
+import ReviewList from '../components/review/ReviewList.vue';
+import ShareButton from '../components/buttons/ShareButton.vue';
+import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue';
 
 const route = useRoute();
 const router = useRouter();
 const { isAuthenticated, getCurrentUser } = useAuth();
-const { api } = useApi();
-
-// State variables
-const movie = ref(null);
-const reviews = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const reviewError = ref(null);
-const posterLoaded = ref(true);
-const reviewsPage = ref(1);
-const reviewsPages = ref(1);
-const totalReviews = ref(0);
-const movieRank = ref(null);
+const { movie, movieRank, loading, error, posterLoaded, fetchMovieDetails } = useMovieDetails();
+const { reviews, reviewError, reviewsPage, reviewsPages, totalReviews, fetchReviews } = useMovieReviews();
 const showEditModal = ref(false);
 
 // Get the movie ID from the route
@@ -316,48 +308,20 @@ const addedBy = computed(() => {
   return u.username || u.name || u.id || u._id || null;
 });
 
-// Function definitions - MUST BE BEFORE WATCH
-const fetchMovieDetails = async () => {
+const loadPageData = async () => {
+  if (!movieId.value || movieId.value === 'undefined') {
+    return;
+  }
+
   try {
-    if (!movieId.value) {
-      return;
-    }
-
-    loading.value = true;
-    error.value = null;
-
-    const response = await api.get(`/movies/${movieId.value}/with-rank`);
-
-    // The backend returns { movie, reviewCount, rank }
-    movie.value = response.data.movie || response.data;
-    movieRank.value = response.data.rank || null;
-    posterLoaded.value = true;
-  } catch (err) {
-    error.value =
-      err.response?.data?.message || err.message || 'An error occurred while loading the movie';
-  } finally {
-    loading.value = false;
+    await Promise.all([
+      fetchMovieDetails(movieId.value),
+      fetchReviews(movieId.value)
+    ]);
+  } catch (_err) {
+    // Individual composables already assign local error state.
   }
 };
-
-const fetchReviews = async () => {
-  try {
-    if (!movieId.value) {
-      return;
-    }
-
-    const page = reviewsPage.value
-    const response = await api.get(`/movies/${movieId.value}/reviews?page=${page}&limit=5`)
-
-    // Backend returns { reviews, pagination }
-    reviews.value = response.data.reviews || []
-    totalReviews.value = response.data.pagination?.totalReviews || 0
-    reviewsPages.value = response.data.pagination?.totalPages || 1
-  } catch (err) {
-    // Silently fail on review fetch errors
-  }
-    // Silently fail on review fetch errors
-  }
 
 const handleImageError = () => {
   posterLoaded.value = false;
@@ -396,18 +360,13 @@ const getYoutubeEmbedUrl = (url) => {
 
 const handleAddReview = async (reviewData) => {
   try {
-    const method = reviewData.reviewId ? 'put' : 'post';
-    const url = reviewData.reviewId
-      ? `/reviews/${reviewData.reviewId}`
-      : `/movies/${movieId.value}/reviews`;
-
-    if (method === 'put') {
-      await api.put(url, {
+    if (reviewData.reviewId) {
+      await reviewService.updateReview(reviewData.reviewId, {
         rating: reviewData.rating,
         content: reviewData.content
       });
     } else {
-      await api.post(url, {
+      await reviewService.createReview(movieId.value, {
         movieId: reviewData.movieId,
         rating: reviewData.rating,
         content: reviewData.content
@@ -416,7 +375,7 @@ const handleAddReview = async (reviewData) => {
 
     reviewError.value = null;
     // Fetch both reviews and updated movie details to refresh rating
-    await Promise.all([fetchReviews(), fetchMovieDetails()]);
+    await Promise.all([fetchReviews(movieId.value), fetchMovieDetails(movieId.value)]);
   } catch (err) {
     reviewError.value = err.response?.data?.message || err.message || 'Failed to save review';
   }
@@ -429,10 +388,10 @@ const handleEditReview = (_review) => {
 
 const handleDeleteReview = async (reviewId) => {
   try {
-    await api.delete(`/reviews/${reviewId}`);
+    await reviewService.deleteReview(reviewId);
 
     // Fetch both reviews and updated movie details to refresh rating
-    await Promise.all([fetchReviews(), fetchMovieDetails()]);
+    await Promise.all([fetchReviews(movieId.value), fetchMovieDetails(movieId.value)]);
   } catch (err) {
     // Silently fail on delete errors
   }
@@ -440,7 +399,7 @@ const handleDeleteReview = async (reviewId) => {
 
 const handleReviewsPageChange = (page) => {
   reviewsPage.value = page;
-  fetchReviews();
+  fetchReviews(movieId.value);
 };
 
 const clearReviewError = () => {
@@ -460,8 +419,7 @@ onMounted(async () => {
 
   const id = movieId.value;
   if (id && id !== 'undefined') {
-    await fetchMovieDetails();
-    await fetchReviews();
+    await loadPageData();
   }
 });
 
@@ -472,8 +430,7 @@ watch(movieId, async (newId) => {
 
   if (newId && newId !== 'undefined') {
     reviewsPage.value = 1;
-    await fetchMovieDetails();
-    await fetchReviews();
+    await loadPageData();
   }
 });
 
@@ -488,7 +445,7 @@ const closeEditModal = () => {
 
 const handleMovieUpdate = async (movieData) => {
   try {
-    await api.put(`/movies/${movieId.value}`, {
+    await movieService.updateMovie(movieId.value, {
       title: movieData.title,
       description: movieData.description,
       releaseDate: movieData.releaseDate,
@@ -498,7 +455,7 @@ const handleMovieUpdate = async (movieData) => {
 
     showEditModal.value = false;
     // Reload the movie details
-    await fetchMovieDetails();
+    await fetchMovieDetails(movieId.value);
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to update movie';
   }
@@ -510,7 +467,7 @@ const deleteMovie = async () => {
   }
 
   try {
-    await api.delete(`/movies/${movieId.value}`);
+    await movieService.deleteMovie(movieId.value);
     // Redirect to home page after successful deletion
     router.push('/');
   } catch (err) {

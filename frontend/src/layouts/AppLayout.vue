@@ -229,8 +229,8 @@ const goToExplore = async () => {
   }
 };
 
-const handleLogout = () => {
-  authLogout();
+const handleLogout = async () => {
+  await authLogout();
   showMenu.value = false;
   router.push('/auth/login');
 };

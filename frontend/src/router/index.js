@@ -33,6 +33,16 @@ const routes = [
         path: 'movie/:id',
         name: 'MovieDetails',
         component: () => import('../pages/MovieDetails.vue')
+      },
+      {
+        path: 'terms',
+        name: 'Terms',
+        component: () => import('../pages/TermsPage.vue')
+      },
+      {
+        path: 'privacy',
+        name: 'Privacy',
+        component: () => import('../pages/PrivacyPage.vue')
       }
     ]
   },

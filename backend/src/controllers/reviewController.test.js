@@ -1,25 +1,11 @@
-const mockFindById = jest.fn();
-const mockFindByIdAndUpdate = jest.fn();
-const mockSave = jest.fn();
+const mockCreateReviewForMovie = jest.fn();
 
-jest.mock('../models/Movie', () => ({ findById: mockFindById, findByIdAndUpdate: mockFindByIdAndUpdate }));
-
-jest.mock('../models/Review', () => {
-  const Review = function (data) {
-    this.content = data.content;
-    this.rating = data.rating;
-    this.movieId = data.movieId;
-    this.userId = data.userId;
-    this.save = mockSave;
-  };
-  Review.find = jest.fn().mockReturnValue({ populate: jest.fn().mockReturnThis(), sort: jest.fn().mockReturnThis(), skip: jest.fn().mockReturnThis(), limit: jest.fn().mockResolvedValue([]) });
-  Review.findOne = jest.fn().mockResolvedValue(null);
-  Review.findById = jest.fn().mockResolvedValue(null);
-  Review.findByIdAndDelete = jest.fn().mockResolvedValue(null);
-  Review.countDocuments = jest.fn().mockResolvedValue(0);
-  Review.aggregate = jest.fn().mockResolvedValue([]);
-  return Review;
-});
+jest.mock('../services/reviewService', () => ({
+  createReviewForMovie: mockCreateReviewForMovie,
+  getReviewsForMovie: jest.fn(),
+  updateReview: jest.fn(),
+  deleteReview: jest.fn()
+}));
 
 const { getReviewsForMovie, createReviewForMovie } = require('./reviewController');
 
@@ -32,12 +18,11 @@ const makeRes = () => {
 
 describe('reviewController.createReviewForMovie', () => {
   beforeEach(() => {
-    mockFindById.mockReset();
-    mockSave.mockReset();
+    mockCreateReviewForMovie.mockReset();
   });
 
   test('returns 404 when movie not found', async () => {
-    mockFindById.mockResolvedValueOnce(null);
+    mockCreateReviewForMovie.mockResolvedValueOnce({ status: 'MOVIE_NOT_FOUND' });
 
     const req = { params: { id: 'm1' }, body: { content: 'great movie', rating: 8 }, userId: 'u1' };
     const res = makeRes();
@@ -50,8 +35,7 @@ describe('reviewController.createReviewForMovie', () => {
   });
 
   test('creates review when movie exists', async () => {
-    mockFindById.mockResolvedValueOnce({ _id: 'm1' });
-    mockSave.mockResolvedValueOnce();
+    mockCreateReviewForMovie.mockResolvedValueOnce({ status: 'OK', review: { _id: 'r1' } });
 
     const req = { params: { id: 'm1' }, body: { content: 'great movie', rating: 8 }, userId: 'u1' };
     const res = makeRes();
@@ -59,8 +43,19 @@ describe('reviewController.createReviewForMovie', () => {
 
     await createReviewForMovie(req, res, next);
 
-    expect(mockSave).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalled();
+  });
+
+  test('forwards DB failure to error middleware', async () => {
+    const dbError = new Error('db failure');
+    mockCreateReviewForMovie.mockRejectedValueOnce(dbError);
+    const req = { params: { id: 'm1' }, body: { content: 'great movie', rating: 8 }, userId: 'u1' };
+    const res = makeRes();
+    const next = jest.fn();
+
+    await createReviewForMovie(req, res, next);
+
+    expect(next).toHaveBeenCalledWith(dbError);
   });
 });

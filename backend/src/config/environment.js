@@ -17,6 +17,12 @@ const config = {
     expiresIn: '7d',
     algorithm: 'HS256'
   },
+  authCookie: {
+    name: process.env.AUTH_COOKIE_NAME || 'auth_token',
+    maxAgeMs: parseInt(process.env.AUTH_COOKIE_MAX_AGE_MS, 10) || 7 * 24 * 60 * 60 * 1000,
+    sameSite: process.env.AUTH_COOKIE_SAME_SITE || 'lax',
+    secure: process.env.AUTH_COOKIE_SECURE === 'true'
+  },
 
   // Server Configuration
   server: {

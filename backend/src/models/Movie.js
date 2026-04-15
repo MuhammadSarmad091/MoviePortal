@@ -4,7 +4,6 @@ const movieSchema = new mongoose.Schema({
   title: {
     type: String,
     required: [true, 'Movie title is required'],
-    unique: true,
     trim: true
   },
   description: {
@@ -34,6 +33,11 @@ const movieSchema = new mongoose.Schema({
     min: 0,
     max: 10
   },
+  reviewCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -43,10 +47,6 @@ const movieSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-
-// Index for query performance on userId
-movieSchema.index({ userId: 1 });
-movieSchema.index({ createdAt: -1 }); // For sorting
 
 // Virtual field to expose _id as id
 movieSchema.virtual('id').get(function() {

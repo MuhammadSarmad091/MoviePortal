@@ -1,9 +1,12 @@
 const { verifyToken } = require('../utils/jwt');
 const User = require('../models/User');
+const { config } = require('../config/environment');
 
 const authenticate = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const cookieToken = req.cookies?.[config.authCookie.name];
+    const bearerToken = req.headers.authorization?.split(' ')[1];
+    const token = cookieToken || bearerToken;
 
     if (!token) {
       return res.status(401).json({ message: 'No token provided' });

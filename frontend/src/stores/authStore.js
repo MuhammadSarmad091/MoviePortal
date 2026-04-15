@@ -1,15 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { useApi } from '../composables/useApi';
+import { authService } from '../services/authService';
 
 /**
  * Authentication Store with Security Best Practices
  *
  * Security Implementation:
- * - JWT token stored in httpOnly cookie (set by backend)
- *   - Not accessible via JavaScript (XSS protection)
- *   - Automatically sent with every request (via withCredentials)
- *   - Cannot be stolen by malicious scripts
+ * - JWT token stored only in httpOnly cookie set by backend
+ *   - JavaScript cannot read/modify the token
  *
  * - User data (userId, username, email) stored in:
  *   1. In-memory Pinia store (reactive, session-only)
@@ -17,9 +15,7 @@ import { useApi } from '../composables/useApi';
  *   - User data is non-sensitive and required by components
  *   - localStorage serves as fallback on page load
  *
- * - API requests use axios with withCredentials: true
- *   - Browser automatically includes httpOnly cookies
- *   - No manual token injection needed
+ * - API requests use withCredentials so browser sends auth cookie automatically
  */
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -55,16 +51,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Actions
   const login = async (email, password) => {
-    const { api } = useApi();
     loading.value = true;
     error.value = null;
 
     try {
-      const response = await api.post('/users/login', { email, password });
+      const response = await authService.login(email, password);
 
       // Handle different response structures
-      // Backend returns: { message, data: { userId, username, token } }
-      let userData = response.data;
+      // Backend returns: { message, data: { userId, username } }
+      let userData = response;
 
       // If response has a nested 'data' property, use that
       if (userData.data && userData.data.userId) {
@@ -73,15 +68,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       const userId = userData.userId;
       const username = userData.username;
-      const token = userData.token;
-
-      if (!userId || !username || !token) {
+      if (!userId || !username) {
         throw new Error('Invalid response from server');
       }
-
-      // Token is now managed via httpOnly cookie from backend
-      // Do NOT store token in localStorage for security
-      // (XSS cannot access httpOnly cookies)
 
       // Store only non-sensitive user data in localStorage for persistence on page refresh
       const completeUser = {
@@ -96,7 +85,7 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = completeUser;
 
       loading.value = false;
-      return { success: true, data: response.data };
+      return { success: true, data: response };
     } catch (err) {
       error.value = err.response?.data?.message || err.message || 'Login failed';
       loading.value = false;
@@ -105,16 +94,15 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const register = async (username, email, password) => {
-    const { api } = useApi();
     loading.value = true;
     error.value = null;
 
     try {
-      const response = await api.post('/users/register', { username, email, password });
+      const response = await authService.register(username, email, password);
 
       // Handle different response structures
-      // Backend returns: { message, data: { userId, username, token } }
-      let userData = response.data;
+      // Backend returns: { message, data: { userId, username } }
+      let userData = response;
 
       // If response has a nested 'data' property, use that
       if (userData.data && userData.data.userId) {
@@ -123,15 +111,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       const userId = userData.userId;
       const usernameFromBackend = userData.username;
-      const token = userData.token;
-
-      if (!userId || !usernameFromBackend || !token) {
+      if (!userId || !usernameFromBackend) {
         throw new Error('Invalid response from server');
       }
-
-      // Token is now managed via httpOnly cookie from backend
-      // Do NOT store token in localStorage for security
-      // (XSS cannot access httpOnly cookies)
 
       // Store only non-sensitive user data in localStorage for persistence on page refresh
       const completeUser = {
@@ -146,7 +128,7 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = completeUser;
 
       loading.value = false;
-      return { success: true, data: response.data };
+      return { success: true, data: response };
     } catch (err) {
       error.value = err.response?.data?.message || err.message || 'Registration failed';
       loading.value = false;
@@ -154,12 +136,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const logout = () => {
-    // Clear user data from localStorage and store
-    // Token in httpOnly cookie is automatically cleared by backend on logout
-    localStorage.removeItem('user');
-    user.value = null;
-    error.value = null;
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (_err) {
+      // Even if server call fails, clear local state to prevent stale auth UI.
+    } finally {
+      localStorage.removeItem('user');
+      user.value = null;
+      error.value = null;
+    }
   };
 
   const clearError = () => {

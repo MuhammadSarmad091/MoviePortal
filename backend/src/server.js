@@ -1,6 +1,7 @@
 // Entry point for the backend server
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const compression = require('compression');
 const path = require('path');
@@ -41,6 +42,7 @@ const corsOptions = {
 app.use(helmet()); // Security headers
 app.use(compression()); // Gzip compression
 app.use(cors(corsOptions)); // CORS with allowlist
+app.use(cookieParser());
 app.use(express.json({ limit: config.request.jsonLimit })); // Body size limit (DoS protection)
 app.use(express.urlencoded({ extended: true, limit: config.request.urlencodedLimit })); // URL-encoded limit
 
