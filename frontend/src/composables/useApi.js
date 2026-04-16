@@ -15,21 +15,41 @@ export function useApi() {
       }
     });
 
-    // Response interceptor
     apiInstance.interceptors.response.use(
       (response) => response,
-      (error) => {
-        // Handle 401 Unauthorized - only redirect if user is already authenticated
-        // (meaning token expired), not for login/register failures
-        if (error.response?.status === 401) {
-          const user = localStorage.getItem('user');
-          if (user) {
-            // Session exists but cookie is invalid/expired
-            localStorage.removeItem('user');
-            window.location.href = '/auth/login';
-          }
-          // If no user session, let the error propagate (login/register errors)
+      async (error) => {
+        // Silently swallow cancelled requests — the caller already moved on
+        if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+          return Promise.reject(error);
         }
+
+        // Network / timeout — no response from server
+        if (!error.response) {
+          console.error('[API] Network error:', error.message);
+          return Promise.reject(error);
+        }
+
+        const { status } = error.response;
+
+        if (status === 401) {
+          // Clear in-memory session without hitting the backend again
+          // (the cookie is already invalid/expired).
+          try {
+            const { useAuthStore } = await import('../stores/authStore');
+            const store = useAuthStore();
+            if (store.user) {
+              store.clearSession();
+              window.location.href = '/auth/login';
+            }
+          } catch {
+            // Store not yet initialized — fall through so the error propagates
+          }
+        }
+
+        if (status >= 500) {
+          console.error('[API] Server error:', error.response.data?.message || status);
+        }
+
         return Promise.reject(error);
       }
     );

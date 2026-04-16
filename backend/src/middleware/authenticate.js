@@ -2,6 +2,22 @@ const { verifyToken } = require('../utils/jwt');
 const User = require('../models/User');
 const { config } = require('../config/environment');
 
+/**
+ * Authentication middleware — supports two token delivery methods:
+ *
+ *  1. **httpOnly cookie** (`config.authCookie.name`)
+ *     Primary method used by the browser frontend. The cookie is set by
+ *     the login/register endpoints and sent automatically with every
+ *     same-origin request (`withCredentials: true`).
+ *
+ *  2. **Authorization: Bearer <token>** header
+ *     Used by automated tests, API clients, and non-browser consumers
+ *     that cannot rely on cookies.
+ *
+ * Cookie is checked first; if absent the Bearer header is used as
+ * fallback. Both paths resolve to the same JWT so behaviour is
+ * identical regardless of delivery method.
+ */
 const authenticate = async (req, res, next) => {
   try {
     const cookieToken = req.cookies?.[config.authCookie.name];

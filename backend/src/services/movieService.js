@@ -4,16 +4,35 @@ const Review = require('../models/Review');
 
 const listMovies = async ({ page, limit }) => {
   const skip = (page - 1) * limit;
-  const [movies, total] = await Promise.all([
-    Movie.find({})
-      .populate('userId', 'username')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit),
-    Movie.countDocuments()
+  const result = await Movie.aggregate([
+    { $sort: { createdAt: -1 } },
+    {
+      $facet: {
+        movies: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'userId',
+              foreignField: '_id',
+              as: '_user',
+              pipeline: [{ $project: { username: 1 } }]
+            }
+          },
+          { $unwind: { path: '$_user', preserveNullAndEmptyArrays: true } },
+          { $addFields: { id: { $toString: '$_id' }, userId: { $ifNull: ['$_user', '$userId'] } } },
+          { $project: { _user: 0 } }
+        ],
+        totalCount: [{ $count: 'count' }]
+      }
+    }
   ]);
 
-  return { movies, total };
+  return {
+    movies: result[0]?.movies || [],
+    total: result[0]?.totalCount[0]?.count || 0
+  };
 };
 
 const getMovieById = async (movieId) => {
@@ -73,15 +92,36 @@ const deleteMovie = async ({ movieId, userId }) => {
 const searchMoviesByTitle = async ({ title, page, limit }) => {
   const skip = (page - 1) * limit;
   const searchRegex = new RegExp(title, 'i');
-  const [movies, total] = await Promise.all([
-    Movie.find({ title: searchRegex })
-      .populate('userId', 'username')
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 }),
-    Movie.countDocuments({ title: searchRegex })
+  const result = await Movie.aggregate([
+    { $match: { title: searchRegex } },
+    { $sort: { createdAt: -1 } },
+    {
+      $facet: {
+        movies: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'userId',
+              foreignField: '_id',
+              as: '_user',
+              pipeline: [{ $project: { username: 1 } }]
+            }
+          },
+          { $unwind: { path: '$_user', preserveNullAndEmptyArrays: true } },
+          { $addFields: { id: { $toString: '$_id' }, userId: { $ifNull: ['$_user', '$userId'] } } },
+          { $project: { _user: 0 } }
+        ],
+        totalCount: [{ $count: 'count' }]
+      }
+    }
   ]);
-  return { movies, total };
+
+  return {
+    movies: result[0]?.movies || [],
+    total: result[0]?.totalCount[0]?.count || 0
+  };
 };
 
 const getRankedMovies = async ({ page, limit }) => {

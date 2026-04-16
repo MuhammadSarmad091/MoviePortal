@@ -17,5 +17,11 @@ export const authService = {
     const { api } = useApi();
     const response = await api.post('/users/logout');
     return response.data;
+  },
+
+  async getMe() {
+    const { api } = useApi();
+    const response = await api.get('/users/me');
+    return response.data;
   }
 };

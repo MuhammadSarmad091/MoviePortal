@@ -110,6 +110,7 @@ const getCurrentUser = async (req, res, next) => {
     res.json({
       message: 'Profile retrieved successfully',
       data: {
+        userId: user._id,
         username: user.username,
         email: user.email,
         displayName: user.displayName,

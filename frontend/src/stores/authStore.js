@@ -3,53 +3,45 @@ import { ref, computed } from 'vue';
 import { authService } from '../services/authService';
 
 /**
- * Authentication Store with Security Best Practices
+ * Authentication Store — httpOnly-cookie only
  *
- * Security Implementation:
- * - JWT token stored only in httpOnly cookie set by backend
- *   - JavaScript cannot read/modify the token
+ * The JWT lives exclusively in an httpOnly cookie managed by the backend.
+ * JavaScript never reads, stores, or transmits the token directly.
  *
- * - User data (userId, username, email) stored in:
- *   1. In-memory Pinia store (reactive, session-only)
- *   2. localStorage (for page refresh persistence)
- *   - User data is non-sensitive and required by components
- *   - localStorage serves as fallback on page load
- *
- * - API requests use withCredentials so browser sends auth cookie automatically
+ * On page load the store calls GET /users/me (cookie sent automatically via
+ * withCredentials) to restore the session into in-memory Pinia state.
+ * No data is persisted in localStorage.
  */
 export const useAuthStore = defineStore('auth', () => {
-  // State
   const user = ref(null);
   const loading = ref(false);
   const error = ref(null);
 
-  // Initialize user from localStorage on store creation
-  const initializeAuth = () => {
-    try {
-      const userData = localStorage.getItem('user');
+  const isAuthenticated = computed(() => !!user.value);
+  const currentUser = computed(() => user.value);
 
-      if (userData) {
-        user.value = JSON.parse(userData);
+  /**
+   * Restore session from the httpOnly cookie by calling GET /users/me.
+   * Should be awaited once at app startup (before mount) so that the
+   * initial render already knows whether the user is logged in.
+   */
+  const checkAuth = async () => {
+    try {
+      const response = await authService.getMe();
+      const data = response.data || response;
+      if (data.userId) {
+        user.value = {
+          userId: data.userId,
+          username: data.username,
+          email: data.email
+        };
       }
-    } catch (err) {
-      // Clear corrupted data
-      localStorage.removeItem('user');
+    } catch {
+      // 401 or network error — user is simply not authenticated
       user.value = null;
     }
   };
 
-  // Initialize immediately
-  initializeAuth();
-
-  // Computed
-  const isAuthenticated = computed(() => {
-    // Check if user has data - don't rely on localStorage in computed
-    return !!user.value;
-  });
-
-  const currentUser = computed(() => user.value);
-
-  // Actions
   const login = async (email, password) => {
     loading.value = true;
     error.value = null;
@@ -57,11 +49,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await authService.login(email, password);
 
-      // Handle different response structures
-      // Backend returns: { message, data: { userId, username } }
       let userData = response;
-
-      // If response has a nested 'data' property, use that
       if (userData.data && userData.data.userId) {
         userData = userData.data;
       }
@@ -72,17 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Invalid response from server');
       }
 
-      // Store only non-sensitive user data in localStorage for persistence on page refresh
-      const completeUser = {
-        userId: userId,
-        username: username,
-        email: email
-      };
-
-      localStorage.setItem('user', JSON.stringify(completeUser));
-
-      // Update the reactive ref (in-memory store)
-      user.value = completeUser;
+      user.value = { userId, username, email };
 
       loading.value = false;
       return { success: true, data: response };
@@ -100,11 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await authService.register(username, email, password);
 
-      // Handle different response structures
-      // Backend returns: { message, data: { userId, username } }
       let userData = response;
-
-      // If response has a nested 'data' property, use that
       if (userData.data && userData.data.userId) {
         userData = userData.data;
       }
@@ -115,17 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Invalid response from server');
       }
 
-      // Store only non-sensitive user data in localStorage for persistence on page refresh
-      const completeUser = {
-        userId: userId,
-        username: usernameFromBackend,
-        email: email
-      };
-
-      localStorage.setItem('user', JSON.stringify(completeUser));
-
-      // Update the reactive ref (in-memory store)
-      user.value = completeUser;
+      user.value = { userId, username: usernameFromBackend, email };
 
       loading.value = false;
       return { success: true, data: response };
@@ -139,13 +103,21 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = async () => {
     try {
       await authService.logout();
-    } catch (_err) {
-      // Even if server call fails, clear local state to prevent stale auth UI.
+    } catch {
+      // Even if the server call fails, clear local state.
     } finally {
-      localStorage.removeItem('user');
       user.value = null;
       error.value = null;
     }
+  };
+
+  /**
+   * Clear in-memory session without hitting the backend.
+   * Used by the 401 interceptor where the cookie is already invalid.
+   */
+  const clearSession = () => {
+    user.value = null;
+    error.value = null;
   };
 
   const clearError = () => {
@@ -157,21 +129,19 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   return {
-    // State
     user,
     loading,
     error,
 
-    // Computed
     isAuthenticated,
     currentUser,
 
-    // Actions
+    checkAuth,
     login,
     register,
     logout,
+    clearSession,
     clearError,
-    setUser,
-    initializeAuth
+    setUser
   };
 });

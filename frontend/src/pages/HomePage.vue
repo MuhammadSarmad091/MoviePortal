@@ -187,6 +187,8 @@ const computeItemsPerPage = () => {
 };
 
 let resizeTimer = null;
+let mountComplete = false;
+
 const onResize = () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
@@ -202,10 +204,11 @@ const onResize = () => {
   }, 150);
 };
 
-onMounted(() => {
+onMounted(async () => {
   computeItemsPerPage();
   window.addEventListener('resize', onResize);
-  loadMovies();
+  await loadMovies();
+  mountComplete = true;
 });
 
 onBeforeUnmount(() => {
@@ -213,8 +216,10 @@ onBeforeUnmount(() => {
   clearTimeout(resizeTimer);
 });
 
-// react to page changes
-watch(currentPage, async (newPage) => {
+// Only react to page changes *after* the initial mount load has finished,
+// preventing a duplicate fetch if something triggers a currentPage write during setup.
+watch(currentPage, async () => {
+  if (!mountComplete) return;
   await loadMovies();
 });
 

@@ -243,7 +243,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 import { useMovieDetails } from '../composables/useMovieDetails';
@@ -257,8 +257,14 @@ import AddEditMovieModal from '../components/modal/AddEditMovieModal.vue';
 const route = useRoute();
 const router = useRouter();
 const { isAuthenticated, getCurrentUser } = useAuth();
-const { movie, movieRank, loading, error, posterLoaded, fetchMovieDetails } = useMovieDetails();
-const { reviews, reviewError, reviewsPage, reviewsPages, totalReviews, fetchReviews } = useMovieReviews();
+const {
+  movie, movieRank, loading, error, posterLoaded, fetchMovieDetails,
+  cancelPending: cancelMovieDetails
+} = useMovieDetails();
+const {
+  reviews, reviewError, reviewsPage, reviewsPages, totalReviews, fetchReviews,
+  cancelPending: cancelReviews
+} = useMovieReviews();
 const showEditModal = ref(false);
 
 // Get the movie ID from the route
@@ -410,7 +416,11 @@ const goBack = () => {
   router.back();
 };
 
-// Load movie details when component mounts or movieId changes
+onBeforeUnmount(() => {
+  cancelMovieDetails();
+  cancelReviews();
+});
+
 onMounted(async () => {
   // Ensure page starts at top when opened
   if (typeof window !== 'undefined' && window.scrollTo) {
