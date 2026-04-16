@@ -1,6 +1,7 @@
 /**
  * Review Integration Tests
- * Tests review creation, updates, unique constraints, and rating calculations
+ * Tests review creation, updates, unique constraints, and rating calculations.
+ * All authenticated requests use httpOnly cookies — no Bearer tokens.
  */
 
 const {
@@ -19,6 +20,8 @@ const app = require('../../src/server');
 const Review = require('../../src/models/Review');
 const Movie = require('../../src/models/Movie');
 
+const AUTH_COOKIE = process.env.AUTH_COOKIE_NAME || 'auth_token';
+
 describe('Review Integration Tests', () => {
   let user1, user2;
   let token1, token2;
@@ -35,7 +38,6 @@ describe('Review Integration Tests', () => {
   beforeEach(async () => {
     await clearTestDatabase();
     
-    // Create two test users
     user1 = await createTestUser();
     user2 = await createTestUser({
       username: 'testuser2',
@@ -45,7 +47,6 @@ describe('Review Integration Tests', () => {
     token1 = getTestToken(user1._id.toString());
     token2 = getTestToken(user2._id.toString());
     
-    // Create test movie
     movie = await createTestMovie(user1._id);
   });
   
@@ -56,17 +57,15 @@ describe('Review Integration Tests', () => {
         rating: 8
       };
       
-      // Create first review
       await request(app)
         .post(`/api/v1/movies/${movie._id}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send(reviewData)
         .expect(201);
       
-      // Try to create second review from same user for same movie
       const response = await request(app)
         .post(`/api/v1/movies/${movie._id}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
           content: 'Actually, second thoughts...',
           rating: 5
@@ -79,10 +78,10 @@ describe('Review Integration Tests', () => {
     test('should fail with invalid rating (too high)', async () => {
       const response = await request(app)
         .post(`/api/v1/movies/${movie._id}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
           content: 'This movie is great!',
-          rating: 11 // Invalid: > 10
+          rating: 11
         })
         .expect(400);
       
@@ -92,10 +91,10 @@ describe('Review Integration Tests', () => {
     test('should fail with invalid rating (too low)', async () => {
       const response = await request(app)
         .post(`/api/v1/movies/${movie._id}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
           content: 'This movie is terrible!',
-          rating: 0 // Invalid: < 1
+          rating: 0
         })
         .expect(400);
       
@@ -105,10 +104,9 @@ describe('Review Integration Tests', () => {
     test('should fail with missing content field', async () => {
       const response = await request(app)
         .post(`/api/v1/movies/${movie._id}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
           rating: 5
-          // Missing content
         })
         .expect(400);
       
@@ -118,9 +116,9 @@ describe('Review Integration Tests', () => {
     test('should fail with content too short', async () => {
       const response = await request(app)
         .post(`/api/v1/movies/${movie._id}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
-          content: 'Good',  // Too short (< 10 chars)
+          content: 'Good',
           rating: 5
         })
         .expect(400);
@@ -131,10 +129,9 @@ describe('Review Integration Tests', () => {
     test('should fail with missing rating field', async () => {
       const response = await request(app)
         .post(`/api/v1/movies/${movie._id}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
           content: 'This is a detailed review content with good length.'
-          // Missing rating
         })
         .expect(400);
       
@@ -158,7 +155,7 @@ describe('Review Integration Tests', () => {
       
       const response = await request(app)
         .post(`/api/v1/movies/${fakeMovieId}/reviews`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
           content: 'This is a detailed review content.',
           rating: 5
@@ -171,7 +168,6 @@ describe('Review Integration Tests', () => {
   
   describe('GET /api/v1/movies/:id/reviews', () => {
     test('should get all reviews for a movie with pagination', async () => {
-      // Create multiple reviews for the same movie
       await createTestReview(movie._id, user1._id, { rating: 8, content: 'Great film!' });
       await createTestReview(movie._id, user2._id, { rating: 7, content: 'Very good!' });
       
@@ -202,7 +198,7 @@ describe('Review Integration Tests', () => {
       
       const response = await request(app)
         .put(`/api/v1/reviews/${review._id}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({
           rating: 8,
           content: 'After rewatching, I think it is excellent actually!'
@@ -218,7 +214,7 @@ describe('Review Integration Tests', () => {
       
       const response = await request(app)
         .put(`/api/v1/reviews/${review._id}`)
-        .set('Authorization', `Bearer ${token2}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token2}`)
         .send({ 
           rating: 1,
           content: 'Updated content that is long enough for validation'
@@ -233,7 +229,7 @@ describe('Review Integration Tests', () => {
       
       const response = await request(app)
         .put(`/api/v1/reviews/${review._id}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({ 
           rating: 11,
           content: 'Updated content that is long enough for validation'
@@ -246,7 +242,7 @@ describe('Review Integration Tests', () => {
     test('should return 400 for invalid review id', async () => {
       const response = await request(app)
         .put(`/api/v1/reviews/invalid-id`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({ 
           rating: 5,
           content: 'Updated content that is long enough for validation'
@@ -263,12 +259,11 @@ describe('Review Integration Tests', () => {
       
       const response = await request(app)
         .delete(`/api/v1/reviews/${review._id}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .expect(200);
       
       expect(response.body.message).toContain('Review deleted');
       
-      // Verify deleted from database
       const deletedReview = await Review.findById(review._id);
       expect(deletedReview).toBeNull();
     });
@@ -278,7 +273,7 @@ describe('Review Integration Tests', () => {
       
       const response = await request(app)
         .delete(`/api/v1/reviews/${review._id}`)
-        .set('Authorization', `Bearer ${token2}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token2}`)
         .expect(403);
       
       expect(response.body.message).toContain('not authorized');
@@ -289,7 +284,7 @@ describe('Review Integration Tests', () => {
       
       const response = await request(app)
         .delete(`/api/v1/reviews/${fakeId}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .expect(404);
       
       expect(response.body.message).toContain('Review not found');
@@ -301,17 +296,15 @@ describe('Review Integration Tests', () => {
     test('should update movie rating when review is updated', async () => {
       const review = await createTestReview(movie._id, user1._id, { rating: 8 });
       
-      // Update review to lower rating
       await request(app)
         .put(`/api/v1/reviews/${review._id}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .send({ 
           rating: 4,
           content: 'Updated to a lower rating after rewatching the film'
         })
         .expect(200);
       
-      // Get updated movie
       const movieResponse = await request(app)
         .get(`/api/v1/movies/${movie._id}`)
         .expect(200);
@@ -320,22 +313,18 @@ describe('Review Integration Tests', () => {
     });
     
     test('should update movie rating when review is deleted', async () => {
-      // Create two reviews
       const review1 = await createTestReview(movie._id, user1._id, { rating: 8 });
       await createTestReview(movie._id, user2._id, { rating: 6 });
       
-      // Delete one review
       await request(app)
         .delete(`/api/v1/reviews/${review1._id}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .expect(200);
       
-      // Get updated movie
       const movieResponse = await request(app)
         .get(`/api/v1/movies/${movie._id}`)
         .expect(200);
       
-      // Only one review remains with rating 6
       expect(movieResponse.body.movie.ratings).toBe(6);
       expect(movieResponse.body.reviewCount).toBe(1);
     });
@@ -343,13 +332,11 @@ describe('Review Integration Tests', () => {
     test('should set rating to 0 when all reviews are deleted', async () => {
       const review = await createTestReview(movie._id, user1._id, { rating: 8 });
       
-      // Delete the only review
       await request(app)
         .delete(`/api/v1/reviews/${review._id}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token1}`)
         .expect(200);
       
-      // Get updated movie
       const movieResponse = await request(app)
         .get(`/api/v1/movies/${movie._id}`)
         .expect(200);
@@ -361,20 +348,17 @@ describe('Review Integration Tests', () => {
   
   describe('Race Condition Prevention', () => {
     test('should prevent duplicate reviews even under concurrent requests', async () => {
-      // These requests execute concurrently
-      // The unique index constraint should prevent duplicates
-      
       const requests = [
         request(app)
           .post(`/api/v1/movies/${movie._id}/reviews`)
-          .set('Authorization', `Bearer ${token1}`)
+          .set('Cookie', `${AUTH_COOKIE}=${token1}`)
           .send({
             content: 'This is a detailed review first attempt.',
             rating: 8
           }),
         request(app)
           .post(`/api/v1/movies/${movie._id}/reviews`)
-          .set('Authorization', `Bearer ${token1}`)
+          .set('Cookie', `${AUTH_COOKIE}=${token1}`)
           .send({
             content: 'This is a detailed review second attempt.',
             rating: 7
@@ -383,7 +367,6 @@ describe('Review Integration Tests', () => {
       
       const results = await Promise.allSettled(requests);
       
-      // One should succeed (201), one should fail (400)
       const statuses = results
         .map(r => r.value ? r.value.status : r.reason?.status || r.reason)
         .filter(s => typeof s === 'number')
@@ -392,7 +375,6 @@ describe('Review Integration Tests', () => {
       expect(statuses).toContain(201);
       expect(statuses).toContain(400);
       
-      // Only one review should exist
       const reviews = await Review.find({ movieId: movie._id, userId: user1._id });
       expect(reviews.length).toBe(1);
     });

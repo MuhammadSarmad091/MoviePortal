@@ -1,6 +1,7 @@
 /**
  * Movie CRUD Integration Tests
- * Tests movie creation, reading, updating, deleting, and pagination
+ * Tests movie creation, reading, updating, deleting, and pagination.
+ * All authenticated requests use httpOnly cookies — no Bearer tokens.
  */
 
 const {
@@ -16,6 +17,8 @@ const {
 const request = require('supertest');
 const app = require('../../src/server');
 const Movie = require('../../src/models/Movie');
+
+const AUTH_COOKIE = process.env.AUTH_COOKIE_NAME || 'auth_token';
 
 describe('Movie CRUD Integration Tests', () => {
   let user;
@@ -48,10 +51,9 @@ describe('Movie CRUD Integration Tests', () => {
     test('should fail with missing required fields', async () => {
       const response = await request(app)
         .post('/api/v1/movies')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .send({
           title: 'Test Movie'
-          // Missing other required fields like description, releaseDate, etc.
         })
         .expect(400);
       
@@ -61,17 +63,15 @@ describe('Movie CRUD Integration Tests', () => {
     test('should fail with duplicate title', async () => {
       const movieData = testFixtures.movies[0];
       
-      // Create first movie
       await request(app)
         .post('/api/v1/movies')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .send(movieData)
         .expect(201);
       
-      // Try to create another with same title
       const response = await request(app)
         .post('/api/v1/movies')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .send(movieData)
         .expect(400);
       
@@ -99,7 +99,6 @@ describe('Movie CRUD Integration Tests', () => {
         .get('/api/v1/movies?page=1&limit=100000')
         .expect(200);
       
-      // Should cap limit to 100
       expect(response.body.pagination.moviesPerPage).toBeLessThanOrEqual(100);
     });
   });
@@ -144,7 +143,7 @@ describe('Movie CRUD Integration Tests', () => {
       
       const response = await request(app)
         .put(`/api/v1/movies/${movieId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .send(updatedData)
         .expect(200);
       
@@ -156,14 +155,13 @@ describe('Movie CRUD Integration Tests', () => {
       const movies = await createTestMovies(user._id, 1);
       const movieId = movies[0]._id;
       
-      // Create another user
       const { createTestUser } = require('../setup');
       const otherUser = await createTestUser({ email: 'other@example.com', username: 'otheruser' });
       const otherToken = getTestToken(otherUser._id.toString());
       
       const response = await request(app)
         .put(`/api/v1/movies/${movieId}`)
-        .set('Authorization', `Bearer ${otherToken}`)
+        .set('Cookie', `${AUTH_COOKIE}=${otherToken}`)
         .send({ 
           title: 'Hacked Title',
           description: 'Hacked description',
@@ -180,10 +178,9 @@ describe('Movie CRUD Integration Tests', () => {
       const movies = await createTestMovies(user._id, 2);
       const movieId = movies[0]._id;
       
-      // Try to update first movie with second movie's title
       const response = await request(app)
         .put(`/api/v1/movies/${movieId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .send({ 
           title: movies[1].title,
           description: movies[0].description,

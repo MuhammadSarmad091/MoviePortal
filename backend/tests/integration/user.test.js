@@ -1,6 +1,7 @@
 /**
  * User Authentication Integration Tests
- * Tests user registration, login, and profile retrieval
+ * Tests user registration, login, and profile retrieval.
+ * All authenticated requests use httpOnly cookies — no Bearer tokens.
  */
 
 const {
@@ -15,9 +16,9 @@ const {
 } = require('../setup');
 
 const request = require('supertest');
-const jwt = require('jsonwebtoken');
 const app = require('../../src/server');
-const User = require('../../src/models/User');
+
+const AUTH_COOKIE = process.env.AUTH_COOKIE_NAME || 'auth_token';
 
 describe('User Authentication Integration Tests', () => {
   beforeAll(async () => {
@@ -36,12 +37,10 @@ describe('User Authentication Integration Tests', () => {
     test('should fail with duplicate email', async () => {
       const userData = testFixtures.users[0];
       
-      // Create first user
       await request(app)
         .post('/api/v1/users/register')
         .send(userData);
       
-      // Try to register with same email
       const response = await request(app)
         .post('/api/v1/users/register')
         .send({
@@ -58,12 +57,10 @@ describe('User Authentication Integration Tests', () => {
     test('should fail with duplicate username', async () => {
       const userData = testFixtures.users[0];
       
-      // Create first user
       await request(app)
         .post('/api/v1/users/register')
         .send(userData);
       
-      // Try to register with same username
       const response = await request(app)
         .post('/api/v1/users/register')
         .send({
@@ -79,15 +76,13 @@ describe('User Authentication Integration Tests', () => {
   });
   
   describe('POST /api/v1/users/login', () => {
-    test('should login user with correct credentials', async () => {
+    test('should login user and set httpOnly auth cookie', async () => {
       const userData = testFixtures.users[0];
       
-      // Register user first
       await request(app)
         .post('/api/v1/users/register')
         .send(userData);
       
-      // Login
       const response = await request(app)
         .post('/api/v1/users/login')
         .send({
@@ -98,22 +93,26 @@ describe('User Authentication Integration Tests', () => {
       
       expect(response.body).toHaveProperty('message', 'Login successful');
       expect(response.body.data).toHaveProperty('userId');
-      expect(response.body.data).toHaveProperty('token');
-      
-      // Verify token is valid JWT
-      const decoded = jwt.verify(response.body.data.token, process.env.JWT_SECRET);
-      expect(decoded.userId).toBe(response.body.data.userId);
+      expect(response.body.data).toHaveProperty('username');
+
+      // Token must NOT be in the response body
+      expect(response.body.data).not.toHaveProperty('token');
+
+      // Token must be in an httpOnly cookie
+      const cookies = response.headers['set-cookie'];
+      expect(cookies).toBeDefined();
+      const authCookie = cookies.find(c => c.startsWith(`${AUTH_COOKIE}=`));
+      expect(authCookie).toBeDefined();
+      expect(authCookie).toContain('HttpOnly');
     });
     
     test('should fail login with incorrect password', async () => {
       const userData = testFixtures.users[0];
       
-      // Register user
       await request(app)
         .post('/api/v1/users/register')
         .send(userData);
       
-      // Try login with wrong password
       const response = await request(app)
         .post('/api/v1/users/login')
         .send({
@@ -138,25 +137,25 @@ describe('User Authentication Integration Tests', () => {
     });
   });
   
-  describe('JWT Token Validation', () => {
-    test('should reject request with expired token', async () => {
+  describe('Cookie Token Validation', () => {
+    test('should reject request with expired token cookie', async () => {
       const user = await createTestUser();
       const expiredToken = getExpiredToken(user._id.toString());
       
       const response = await request(app)
         .get('/api/v1/users/profile')
-        .set('Authorization', `Bearer ${expiredToken}`)
+        .set('Cookie', `${AUTH_COOKIE}=${expiredToken}`)
         .expect(401);
       
       expect(response.body.message).toContain('Invalid or expired token');
     });
     
-    test('should reject request with invalid token', async () => {
+    test('should reject request with invalid token cookie', async () => {
       const invalidToken = getInvalidToken();
       
       const response = await request(app)
         .get('/api/v1/users/profile')
-        .set('Authorization', `Bearer ${invalidToken}`)
+        .set('Cookie', `${AUTH_COOKIE}=${invalidToken}`)
         .expect(401);
       
       expect(response.body.message).toContain('Invalid or expired token');
@@ -170,27 +169,39 @@ describe('User Authentication Integration Tests', () => {
       expect(response.body.message).toContain('No token provided');
     });
     
-    test('should accept valid token', async () => {
+    test('should accept valid token cookie', async () => {
       const user = await createTestUser();
       const validToken = getTestToken(user._id.toString());
       
       const response = await request(app)
         .get('/api/v1/users/profile')
-        .set('Authorization', `Bearer ${validToken}`)
+        .set('Cookie', `${AUTH_COOKIE}=${validToken}`)
         .expect(200);
       
       expect(response.body.data.email).toBe(user.email);
     });
+
+    test('should reject Bearer token in Authorization header', async () => {
+      const user = await createTestUser();
+      const validToken = getTestToken(user._id.toString());
+
+      const response = await request(app)
+        .get('/api/v1/users/profile')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(401);
+
+      expect(response.body.message).toContain('No token provided');
+    });
   });
   
   describe('GET /api/v1/users/profile', () => {
-    test('should return user profile with valid token', async () => {
+    test('should return user profile with valid cookie', async () => {
       const user = await createTestUser();
       const token = getTestToken(user._id.toString());
       
       const response = await request(app)
         .get('/api/v1/users/profile')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .expect(200);
       
       expect(response.body.data.username).toBe(user.username);
@@ -204,7 +215,7 @@ describe('User Authentication Integration Tests', () => {
       
       const response = await request(app)
         .get('/api/v1/users/profile')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .expect(200);
       
       expect(response.body.data).toHaveProperty('createdAt');
@@ -218,9 +229,10 @@ describe('User Authentication Integration Tests', () => {
       
       const response = await request(app)
         .get('/api/v1/users/me')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Cookie', `${AUTH_COOKIE}=${token}`)
         .expect(200);
       
+      expect(response.body.data.userId).toBeDefined();
       expect(response.body.data.username).toBe(user.username);
       expect(response.body.data.email).toBe(user.email);
     });

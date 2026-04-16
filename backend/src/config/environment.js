@@ -39,7 +39,7 @@ const config = {
       : ['http://localhost:3000', 'http://localhost:80', 'http://localhost'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type']
   },
 
   // Pagination Configuration

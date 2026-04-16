@@ -1,68 +1,53 @@
 /**
  * Test HTTP Request Helpers
- * Provides utility functions for making test requests to the API
+ * Provides utility functions for making test requests to the API.
+ * Auth tokens are sent as httpOnly cookies (matching production behaviour).
  */
 
 const request = require('supertest');
 
+const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'auth_token';
+
+function setAuthCookie(req, token) {
+  if (token) {
+    req = req.set('Cookie', `${AUTH_COOKIE_NAME}=${token}`);
+  }
+  return req;
+}
+
 /**
- * Create a supertest request wrapper with common headers
+ * Create a supertest request wrapper with common headers.
+ * When a token is provided it is sent as a cookie, not a Bearer header.
  */
 function createRequest(app) {
   return {
-    /**
-     * POST request with JSON body
-     */
     post: (path, data = {}, token = null) => {
       let req = request(app)
         .post(path)
         .set('Content-Type', 'application/json');
-      
-      if (token) {
-        req = req.set('Authorization', `Bearer ${token}`);
-      }
-      
+
+      req = setAuthCookie(req, token);
       return req.send(data);
     },
-    
-    /**
-     * GET request with optional token
-     */
+
     get: (path, token = null) => {
       let req = request(app).get(path);
-      
-      if (token) {
-        req = req.set('Authorization', `Bearer ${token}`);
-      }
-      
+      req = setAuthCookie(req, token);
       return req;
     },
-    
-    /**
-     * PUT request with JSON body
-     */
+
     put: (path, data = {}, token = null) => {
       let req = request(app)
         .put(path)
         .set('Content-Type', 'application/json');
-      
-      if (token) {
-        req = req.set('Authorization', `Bearer ${token}`);
-      }
-      
+
+      req = setAuthCookie(req, token);
       return req.send(data);
     },
-    
-    /**
-     * DELETE request
-     */
+
     delete: (path, token = null) => {
       let req = request(app).delete(path);
-      
-      if (token) {
-        req = req.set('Authorization', `Bearer ${token}`);
-      }
-      
+      req = setAuthCookie(req, token);
       return req;
     }
   };
@@ -78,7 +63,7 @@ function assertResponse(response, expectedStatus, expectedContentType = 'json') 
       `Response: ${JSON.stringify(response.body)}`
     );
   }
-  
+
   if (expectedContentType === 'json') {
     if (!response.headers['content-type'].includes('application/json')) {
       throw new Error(
@@ -86,7 +71,7 @@ function assertResponse(response, expectedStatus, expectedContentType = 'json') 
       );
     }
   }
-  
+
   return response;
 }
 
